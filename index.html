@@ -8,36 +8,40 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="app.js"></script></head>
 <body>
-<header class="topbar"><a class="brand" href="#"><b>F</b> FLUX<span>VERSE</span></a>
-<nav><button class="active" data-page="store">Store</button><button data-page="library">Library</button><button data-page="community">Community</button><button data-page="friends">Friends</button><button data-page="developer">Developer</button></nav>
-<div class="account"><small id="status">Connecting…</small><button id="auth-open" class="outline">Sign in</button><span id="user-chip" class="hidden"><b id="user-label"></b> <button id="sign-out" class="outline">Sign out</button></span></div></header>
+<header class="topbar">
+ <a class="brand" href="#"><span class="brand-mark">🎮</span><b>Flux<span>Verse</span></b></a>
+ <nav>
+  <button class="active" data-page="store">▣ <span>Store</span></button>
+  <button data-page="library">◧ <span>Library</span></button>
+  <button data-page="community">♥ <span>Community</span></button>
+  <button data-page="friends">♧ <span>Friends</span></button>
+  <button data-page="developer">‹/› <span>Developer Portal</span></button>
+ </nav>
+ <div class="header-search"><span>⌕</span><input id="search" placeholder="Search games..." aria-label="Search games"></div>
+ <div class="account"><small id="status">Connecting…</small><button id="auth-open" class="outline">Sign in</button><span id="user-chip" class="hidden"><b id="user-label"></b> <button id="sign-out" class="outline">Sign out</button></span></div>
+</header>
 <main class="wrap">
 <div id="setup" class="notice hidden"><b>Supabase not connected.</b> Open <code>app.js</code> and replace the two configuration placeholders. Never put a service-role key in this file.</div>
 <section id="page-store" class="page active">
  <div class="store-layout">
   <aside class="store-sidebar">
-   <div class="sidebar-label">DISCOVER</div>
-   <button class="side-link selected" data-page="store">⌂ <span>Store Home</span></button>
-   <button class="side-link" data-page="library">▣ <span>My Library</span></button>
-   <button class="side-link" data-page="community">◉ <span>Community</span></button>
-   <button class="side-link" data-page="friends">♧ <span>Friends</span></button>
-   <button class="side-link" data-page="developer">⌘ <span>Developer Portal</span></button>
-   <div class="sidebar-divider"></div>
-   <div class="sidebar-label">BROWSE BY GENRE</div>
+   <h3>Browse Categories</h3>
+   <button class="side-link selected" data-genre="All"><span>▦</span> All Games</button>
    <div id="genres" class="sidebar-genres" aria-label="Scrollable game genres"></div>
-   <div class="sidebar-promo"><span class="promo-icon">✦</span><b>Build your collection</b><p>Discover games and add your favorites to your library.</p><button class="side-promo-button" data-page="library">View Library →</button></div>
+   <div class="sidebar-promo"><div class="promo-crown">♛</div><b>Become a Developer</b><p>Publish your games on FluxVerse!</p><button class="side-promo-button" data-page="developer">Learn More →</button></div>
   </aside>
   <div class="store-main">
-   <div class="store-search-row"><div><small class="eyebrow">YOUR NEXT ADVENTURE STARTS HERE</small><h1>Discover <em>your next game.</em></h1></div><input id="search" placeholder="Search games..." aria-label="Search games"></div>
-   <div class="store-hero"><div class="store-hero-copy"><span class="hero-label">✦ THE FLUXVERSE STORE</span><h2>Play beyond<br><em>ordinary.</em></h2><p>Find your next favorite game, explore new worlds, and build your collection.</p><button class="primary" data-scroll="featured">Explore featured games ↗</button></div><div class="hero-orbit"><span>FLUX<br>VERSE</span></div><div class="hero-dots"><i></i><i></i><i></i></div></div>
-   <div class="promo-grid">
-    <article class="promo-card deal-promo"><div><span class="promo-kicker">✧ SPECIAL OFFERS</span><h3>Limited-time<br><em>deals & savings</em></h3><p>Look out for discounted games and seasonal offers.</p><button class="promo-action" data-scroll="deals">Explore deals →</button></div><div class="promo-art deal-art">％</div></article>
-    <article class="promo-card weekend-promo"><div><span class="promo-kicker">▣ PLAY FOR FREE</span><h3>Free<br><em>weekends</em></h3><p>Try featured games during developer-hosted free weekends.</p><span class="coming-label">WEEKEND EVENTS COMING SOON</span></div><div class="promo-art weekend-art">⌁</div></article>
+   <div class="store-top-grid">
+    <div class="store-hero" id="store-hero"><div class="store-hero-copy"><span class="hero-label">✦ FEATURED ON FLUXVERSE</span><h2 id="hero-title">Discover your<br><em>next adventure.</em></h2><p id="hero-description">Explore new worlds, find your next favorite game, and build your collection.</p><button class="primary" data-scroll="featured">Explore Games ▶</button></div><div class="hero-dots"><i></i><i></i><i></i><i></i><i></i></div></div>
+    <aside class="daily-deals"><div class="rail-heading"><h3>◷ Daily Deals</h3><button data-scroll="deals">View All →</button></div><div id="daily-deal-list"><div class="deal-placeholder">Special offers will appear here when active.</div></div></aside>
    </div>
-   <div class="store-section" id="featured"><div class="store-section-heading"><div><small class="eyebrow">HAND-PICKED FOR YOU</small><h2>Featured games</h2></div><span class="section-note">Discover something new</span></div><div id="featured-games" class="store-game-grid"></div></div>
-   <div class="store-section" id="deals"><div class="store-section-heading"><div><small class="eyebrow">DON'T MISS OUT</small><h2>Deals & offers</h2></div><span class="section-note">Promotions will appear here when active</span></div><div id="deals-games" class="store-game-grid"></div></div>
-   <div class="store-section"><div class="store-section-heading"><div><small class="eyebrow">JUMP IN WITHOUT SPENDING</small><h2>Free to Play</h2></div><span class="section-note">Free games in the catalog</span></div><div id="free-games" class="store-game-grid"></div></div>
-   <div class="store-section"><div class="store-section-heading"><div><small class="eyebrow">FRESH WORLDS TO EXPLORE</small><h2>All games</h2></div><span id="game-count" class="section-note">0 games</span></div><div id="games" class="store-game-grid"></div></div>
+   <div class="feature-weekend-grid">
+    <section class="store-section featured-section" id="featured"><div class="store-section-heading"><h2>★ &nbsp;Featured Games</h2><button data-scroll="all-games">View All →</button></div><div id="featured-games" class="store-game-grid"></div></section>
+    <article class="weekend-banner"><div class="weekend-copy"><span>🎁 &nbsp;LIMITED-TIME EVENT</span><h2>Free Weekend</h2><p>Play selected games for free during special weekend events.</p><small>WEEKEND EVENTS COMING SOON</small></div></article>
+   </div>
+   <div class="store-section" id="deals"><div class="store-section-heading"><h2>◆ &nbsp;Special Deals</h2><span class="section-note">Discounts from participating developers</span></div><div id="deals-games" class="store-game-grid deals-grid"></div></div>
+   <div class="store-section"><div class="store-section-heading"><h2>🎁 &nbsp;Free to Play</h2><button data-genre="Free to Play">View All →</button></div><div id="free-games" class="store-game-grid"></div></div>
+   <div class="store-section" id="all-games"><div class="store-section-heading"><h2>🔥 &nbsp;New & Popular</h2><span id="game-count" class="section-note">0 games</span></div><div id="games" class="store-game-grid"></div></div>
   </div>
  </div>
 </section>

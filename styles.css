@@ -325,3 +325,58 @@ body:before{display:none!important}.fx-topbar{width:100%;height:64px;min-height:
 .fx-showcase-copy .fx-hero-actions .fx-dark-button{background:#040d18d9!important;color:#e9f8fc!important;border:1px solid #2be0d8!important}
 .fx-live-area{min-height:435px!important}
 }
+
+/* FluxVerse v6 — interface-only store upgrade; background artwork and brand colors unchanged. */
+.fv-store-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.fv-sort-label{display:flex;gap:8px;align-items:center;color:#a6c6d2;font-size:12px}
+.fv-sort-label select{border:1px solid #25617a;border-radius:8px;background:#061522;color:#e5f8fa;padding:8px 28px 8px 9px;max-width:180px;cursor:pointer}
+.fv-reset{border:1px solid #257491!important;color:#c8f8ff!important;background:#081b26!important;padding:9px 12px!important;border-radius:7px;font-size:12px;font-weight:700}
+.fv-clear-search{border:0;background:transparent;color:#b9f3ff;font-size:23px;cursor:pointer;padding:0 11px;line-height:1}
+.fx-header-search .fv-clear-search.hidden{display:none!important}
+.fv-open-cover{width:100%;display:block;cursor:pointer;position:relative;border:0;padding:0;text-align:left;color:#fff;overflow:hidden}
+.fv-open-cover:focus-visible,.fv-game-title:focus-visible{outline:2px solid #baff00!important;outline-offset:3px}
+.fv-game-title{border:0;background:transparent;color:#fff;display:block;text-align:left;padding:0;margin:7px 0 5px;font:700 18px 'Space Grotesk',sans-serif;cursor:pointer}
+.fv-game-title:hover{color:#b4ff31}
+.fv-view-link{display:inline-block;margin:8px 0 0;color:#9cff09!important;background:transparent!important;border:0!important;padding:0!important;font-size:12px!important;cursor:pointer}
+.fv-game-tile .game-info .meta{margin-top:3px}
+.fv-game-tile .cover{border-radius:0}
+.fv-game-tile .game-bottom{gap:9px;flex-wrap:wrap;align-items:center}
+.fv-game-tile .game-bottom .small{white-space:nowrap}
+.fv-game-modal{position:fixed;inset:0;z-index:2200;display:flex;align-items:center;justify-content:center;padding:18px}
+.fv-game-modal.hidden{display:none!important}
+.fv-game-shade{position:absolute;inset:0;background:#000d;backdrop-filter:blur(7px)}
+.fv-game-dialog,.fv-info-dialog{position:relative;z-index:1;width:min(100%,950px);max-height:min(92vh,900px);overflow-y:auto;background:#06111b;border:1px solid #169aca;box-shadow:0 24px 100px #000e,0 0 35px #00aaff24;border-radius:15px;color:#f7ffff;padding:27px;outline:0}
+.fv-info-dialog{width:min(100%,440px);padding:40px;text-align:center}
+.fv-info-dialog h2{font:700 27px 'Space Grotesk',sans-serif;color:#fff;margin:11px 0}
+.fv-info-dialog p{line-height:1.65;color:#b9d4df;font-size:14px;overflow-wrap:anywhere}
+.fv-info-symbol{font-size:46px;color:#a6ff00;text-shadow:0 0 30px #a6ff00}
+.fv-detail-close{position:absolute;right:13px;top:11px;background:#0a2030;color:#c8f0ff;border:1px solid #1b5876;border-radius:8px;font-size:27px;line-height:1;width:39px;height:39px;z-index:1;cursor:pointer}
+.fv-detail-header{display:grid;grid-template-columns:minmax(180px,36%) minmax(0,1fr);gap:25px;align-items:start;padding:11px 14px 25px 0;border-bottom:1px solid #1a3f51}
+.fv-detail-cover{width:100%;aspect-ratio:16/10;background:#082b3c;overflow:hidden;border:1px solid #2c7294;border-radius:11px}
+.fv-detail-cover img{width:100%;height:100%;object-fit:cover}
+.fv-detail-placeholder{display:grid;place-items:center;font-size:80px;color:#baff00}
+.fv-detail-eyebrow{font:800 11px 'Space Grotesk',sans-serif;letter-spacing:2px;color:#9bff24}
+.fv-detail-overview h2{font:700 clamp(25px,3vw,38px) 'Space Grotesk',sans-serif;margin:10px 0 13px;line-height:1.15}
+.fv-detail-badges{display:flex;flex-wrap:wrap;gap:8px}
+.fv-detail-badges span{border:1px solid #226b7b;border-radius:999px;color:#a6e5eb;padding:5px 11px;font-size:11px}
+.fv-detail-price{font-size:25px;font-weight:800;margin:19px 0 12px;color:#c7ff4c}
+.fv-detail-price small{font-size:12px;font-weight:500;color:#9cb4c2;display:block;margin:4px 0}
+.fv-detail-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.fv-dialog-button{display:inline-flex;align-items:center;justify-content:center;min-height:41px;border:1px solid #b7fe00;color:#07120a;background:linear-gradient(135deg,#a1ff00,#ffe900);padding:10px 17px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer}
+.fv-dialog-secondary{min-height:41px;border:1px solid #195477;color:#b9d7e4;background:#0c2334;padding:10px 15px;border-radius:8px;font-weight:700;cursor:pointer}
+.fv-action-note{color:#b9d7e4;font-size:12px}
+.fv-share{display:block;margin:16px 0 0;padding:0;border:0;color:#7fdcff;background:transparent;font-size:12px;cursor:pointer}
+.fv-detail-columns{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(235px,.9fr);gap:27px;padding-top:20px}
+.fv-detail-columns h3{font:700 17px 'Space Grotesk',sans-serif;margin:0 0 10px;color:#cbff76}
+.fv-detail-columns p{color:#d0dde5;white-space:pre-line;line-height:1.65;font-size:13px;margin:0 0 18px}
+.fv-detail-columns .fv-specs{border-left:1px solid #23465a;padding-left:24px}
+.fv-specs p b{display:block;margin:0 0 4px;color:#7d9ba9;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.fv-long-text{white-space:pre-line;overflow-wrap:anywhere}
+.fv-external-link{display:inline-block;padding:10px 0;color:#9dff00;font-size:13px}
+.fv-detail-gallery{margin:12px 0}.fv-gallery-stage{border:1px solid #206987;border-radius:7px;overflow:hidden;background:#081522;aspect-ratio:16/9}
+.fv-gallery-stage img{height:100%;width:100%;object-fit:contain}
+.fv-gallery-thumbs{display:flex;gap:7px;padding:9px 0;overflow-x:auto}
+.fv-gallery-thumb{border:2px solid #1d465d;border-radius:5px;padding:0;overflow:hidden;flex:0 0 88px;aspect-ratio:16/9;cursor:pointer;background:#071523}
+.fv-gallery-thumb.active{border-color:#baff00}.fv-gallery-thumb img{width:100%;height:100%;object-fit:cover}
+body.fv-modal-open{overflow:hidden}
+@media(max-width:700px){.fv-game-modal{padding:9px}.fv-game-dialog{padding:18px;max-height:96vh}.fv-detail-header{grid-template-columns:1fr;gap:12px}.fv-detail-cover{max-height:220px}.fv-detail-columns{grid-template-columns:1fr}.fv-detail-columns .fv-specs{border-left:0;padding-left:0;border-top:1px solid #214455;padding-top:19px}.fx-list-heading{flex-direction:column;align-items:flex-start}.fv-store-controls{justify-content:flex-start;width:100%}}

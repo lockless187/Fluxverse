@@ -47,7 +47,7 @@
 .promo-card{position:relative;overflow:hidden;min-height:164px;border:1px solid #ffffff1b;border-radius:14px;padding:19px;background:linear-gradient(115deg,#302044,#1c142c)}
 .weekend-promo{background:linear-gradient(115deg,#1a2b48,#17182e)}
 .promo-card>div:first-child{position:relative;z-index:1}
-.promo-kicker{font-size:8px;letter-spacing:1.5px;font-weight:800;color:#c9b4ff}
+.promo-kicker{font-size:8px;letter-spacing:1.5px;font-weight:800;color:#c9b4ff
 .promo-card h3{font:700 22px/1.05 'Space Grotesk';margin:10px 0 7px}
 .promo-card p{font-size:10px;line-height:1.5;color:#b8accb;max-width:220px;margin:0 0 9px}
 .promo-action{border:0;background:none;color:#d1bdff;font-weight:800;font-size:10px;padding:0}

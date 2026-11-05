@@ -503,3 +503,21 @@ body.fv-modal-open{overflow:hidden}
 
 /* Allow scrolling through recovery forms on smaller laptop and mobile screens. */
 #modal .dialog{max-height:calc(100vh - 36px);overflow-y:auto;scrollbar-width:thin}
+
+/* v8.1 account recovery support — no storefront or navigation changes */
+.fv81-backup-panel,.fv81-issued-box,#fv81-verify-panel{margin-top:16px;padding:16px;border:1px solid #1c6572;border-radius:12px;background:rgba(5,23,31,.78)}
+.fv81-issued-box{border-color:#9cff00}.fv81-secret{display:block;word-break:break-all;padding:12px;margin:9px 0;background:#03121a;border-radius:8px;color:#dfff7b;font-size:15px}
+#fv81-issued-code,#fv81-track-code,#fv81-proof-code{width:100%;max-width:100%;font-family:ui-monospace,Consolas,monospace;letter-spacing:.02em}
+#fv81-ticket-result{max-height:380px;overflow-y:auto;margin-top:12px;padding-right:5px}
+.fv81-msg{background:#0b1e2b;border-left:3px solid #00c5ee;padding:11px 13px;border-radius:6px;margin:9px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.fv81-msg.staff{background:#122415;border-left-color:#a2ff00}
+.fv81-case{margin:14px 0;padding:17px;border:1px solid #1d5368;border-radius:12px}
+.fv81-case .fv81-contact{word-break:break-all;color:#dce8ec}.fv81-proof{color:#ffdb74;font-weight:700}.fv81-proof.verified{color:#a7ff67}
+.fv81-history{padding:9px 0;border-top:1px solid #235066;margin-top:11px}
+.fv81-admin-form{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:10px;align-items:end}
+.fv81-admin-form label{display:flex;flex-direction:column;gap:7px;font-size:12px}
+.fv81-admin-form textarea,.fv81-admin-form select{width:100%;min-width:0;box-sizing:border-box}
+.fv81-admin-form small{grid-column:1/-1;color:#9aaeb6}
+@media(max-width:800px){.fv81-admin-form{grid-template-columns:1fr}}
+
+.fv81-legacy{color:#efce80;padding:10px;margin:0;background:#201b12;border-radius:7px}

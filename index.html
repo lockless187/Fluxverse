@@ -27,7 +27,7 @@
       </div>
     </div>
   </nav>
-  <div class="header-search fx-header-search"><span aria-hidden="true">⌕</span><input id="search" placeholder="Search games, genres, or creators..." aria-label="Search games"></div>
+  <div class="header-search fx-header-search"><span aria-hidden="true">⌕</span><input id="search" placeholder="Search games, genres, or creators..." aria-label="Search games" autocomplete="off"><button type="button" id="fv-clear-search" class="fv-clear-search hidden" aria-label="Clear search">×</button></div>
   <button id="notifications-button" class="fx-bell" type="button" aria-label="Friend requests" title="Friend requests">♧<i></i></button>
   <div class="account fx-account">
     <small id="status">Connecting…</small>
@@ -74,7 +74,11 @@
         <div id="fx-live-list" class="fx-live-list hidden">
           <div class="fx-list-heading">
             <div><span class="fx-stage-eyebrow">EXPLORE FLUXVERSE</span><h2 id="fx-games-heading">Games on FluxVerse</h2><p id="fx-filter-description">Browse the latest approved releases.</p></div>
-            <span class="fx-game-total" id="game-count">0 games</span>
+            <div class="fv-store-controls">
+              <label class="fv-sort-label" for="fv-sort">Sort by <select id="fv-sort" aria-label="Sort games"><option value="new">Newest</option><option value="title">Name A–Z</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option></select></label>
+              <button type="button" class="fv-reset" id="fv-reset-filters" title="Clear search and filters">Clear filters</button>
+              <span class="fx-game-total" id="game-count">0 games</span>
+            </div>
           </div>
           <div id="games" class="store-game-grid"></div>
         </div>
@@ -128,5 +132,20 @@
 </section>
 <footer><a class="brand"><b>F</b> FLUX<span>VERSE</span></a><span>Made for players, powered by community.</span><span>© 2026 FluxVerse</span></footer>
 </main>
-<div id="modal" class="modal hidden"><div class="shade" data-close></div><div class="dialog"><button class="x" data-close>×</button><small>WELCOME TO YOUR UNIVERSE</small><h2>Join <em>FluxVerse.</em></h2><div class="tabs"><button data-mode="login" class="chosen">Sign in</button><button data-mode="signup">Create account</button></div><form id="auth-form"><div id="signup-fields" class="hidden"><label>Username<input id="username" minlength="3" maxlength="24" placeholder="yourname"></label><label>Display name<input id="display" maxlength="40" placeholder="Your display name"></label></div><label>Email<input id="email" type="email" required autocomplete="email"></label><label>Password<input id="password" type="password" minlength="6" required autocomplete="current-password"></label><button id="auth-submit" class="primary full">Sign in ↗</button><p id="auth-message" aria-live="polite"></p></form><small class="fine">If email confirmation is enabled, check your inbox before signing in.</small></div></div><div id="toast"></div>
+<div id="modal" class="modal hidden"><div class="shade" data-close></div><div class="dialog"><button class="x" data-close>×</button><small>WELCOME TO YOUR UNIVERSE</small><h2>Join <em>FluxVerse.</em></h2><div class="tabs"><button data-mode="login" class="chosen">Sign in</button><button data-mode="signup">Create account</button></div><form id="auth-form"><div id="signup-fields" class="hidden"><label>Username<input id="username" minlength="3" maxlength="24" placeholder="yourname"></label><label>Display name<input id="display" maxlength="40" placeholder="Your display name"></label></div><label>Email<input id="email" type="email" required autocomplete="email"></label><label>Password<input id="password" type="password" minlength="6" required autocomplete="current-password"></label><button id="auth-submit" class="primary full">Sign in ↗</button><p id="auth-message" aria-live="polite"></p></form><small class="fine">If email confirmation is enabled, check your inbox before signing in.</small></div></div><div id="fv-game-modal" class="fv-game-modal hidden" role="dialog" aria-modal="true" aria-labelledby="fv-detail-title" aria-describedby="fv-detail-description">
+  <div class="fv-game-shade" data-close-game></div>
+  <div class="fv-game-dialog" tabindex="-1">
+    <button type="button" class="fv-detail-close" data-close-game aria-label="Close game details">×</button>
+    <div id="fv-game-detail-content"></div>
+  </div>
+</div>
+<div id="fv-info-modal" class="fv-game-modal hidden" role="dialog" aria-modal="true" aria-labelledby="fv-info-title">
+  <div class="fv-game-shade" data-close-info></div>
+  <div class="fv-info-dialog" tabindex="-1">
+    <button type="button" class="fv-detail-close" data-close-info aria-label="Close notice">×</button>
+    <div class="fv-info-symbol">✦</div><h2 id="fv-info-title">FluxVerse</h2><p id="fv-info-message"></p>
+    <button type="button" class="fv-dialog-button" data-close-info>Got it</button>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
 </body></html>

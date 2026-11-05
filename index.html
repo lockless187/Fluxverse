@@ -60,11 +60,37 @@
  <div id="developer-apply" class="panel hidden"><div class="section-title"><div><small>STEP 1</small><h2>Apply to become a developer</h2></div><span class="status-pill">Application required</span></div><form id="developer-application-form" class="dev-form"><label>Studio or developer name<input id="dev-studio" maxlength="80" required placeholder="Your studio name"></label><label>Website or portfolio (optional)<input id="dev-website" maxlength="240" type="url" placeholder="https://"></label><label>Tell us about your games<textarea id="dev-about" maxlength="3000" required placeholder="What do you make? Have you released games before?"></textarea></label><button class="primary">Submit developer application</button></form></div>
  <div id="developer-status" class="panel hidden"></div>
  <div id="developer-tools" class="hidden">
-  <div class="panel"><div class="section-title"><div><small>STEP 2</small><h2>Submit a game</h2></div><span class="status-pill approved">Developer approved</span></div><p class="muted">Game submissions are reviewed before publishing. Do not upload executable files here yet; this first version collects the game listing details only.</p><form id="developer-game-form" class="dev-form two-col"><label>Game title<input id="submission-title" maxlength="100" required></label><label>Genre<input id="submission-genre" maxlength="40" required placeholder="Action, RPG, Strategy…"></label><label>Price (CAD)<input id="submission-price" type="number" min="0" max="9999" step="0.01" value="0" required></label><label class="check-label"><input id="submission-cards" type="checkbox"> This game will support collectible cards</label><label class="full-field">Short description<textarea id="submission-description" maxlength="2000" required></textarea></label><button class="primary full-field">Send game for review</button></form></div>
-  <div class="panel"><h2>Your game submissions</h2><div id="developer-submissions" class="muted">Loading…</div></div>
-  <div class="panel earnings-panel"><div><small>DEVELOPER EARNINGS</small><h2>Sales tracking comes next</h2><p class="muted">The 90/10 split is a planned platform rule. No payments, sales ledger, or cash payouts are active yet.</p></div><div class="split-card"><b>90%</b><span>Developer share (proposed)</span></div></div>
+  <div class="dev-stats" id="developer-stats" aria-live="polite"><div class="dev-metric"><b>—</b><span>Loading stats…</span></div></div>
+  <div class="panel">
+   <div class="section-title"><div><small>SUBMIT A NEW GAME</small><h2>Upload a release</h2></div><span class="status-pill approved">Approved developer</span></div>
+   <p class="muted">Submit your own PC game for human review. A cover image and Windows ZIP build are required for approval. ZIP builds are private; only admins and entitled players can download them. Supabase allows 45 MB ZIPs in this setup, or up to 500 MB once the optional Cloudflare R2 Worker is connected.</p>
+   <form id="developer-game-form" class="dev-form two-col">
+    <label>Game title<input id="submission-title" maxlength="100" required placeholder="Your game name"></label>
+    <label>Genre<input id="submission-genre" maxlength="40" required placeholder="Action, RPG, Strategy…"></label>
+    <label>Price (CAD)<input id="submission-price" type="number" min="0" max="9999" step="0.01" value="0" required></label>
+    <label>Release version<input id="submission-version" maxlength="30" placeholder="1.0.0" value="1.0.0" required></label>
+    <label>Supported OS<select id="submission-os"><option>Windows</option><option>Windows + Linux</option><option>Windows + macOS</option><option>Windows + Linux + macOS</option></select></label>
+    <label>Game trailer URL (optional)<input id="submission-trailer" type="url" maxlength="500" placeholder="https://your-trailer-link"></label>
+    <label class="full-field">Game description<textarea id="submission-description" maxlength="2000" rows="4" required placeholder="Tell players what makes your game special."></textarea></label>
+    <label class="full-field">Minimum PC requirements<textarea id="submission-requirements" maxlength="1500" rows="3" placeholder="OS, CPU, RAM, GPU and storage needed"></textarea></label>
+    <label class="full-field">Release notes<textarea id="submission-notes" maxlength="1500" rows="2" placeholder="What's in this version?"></textarea></label>
+    <label class="dev-file-field">Cover art · JPG/PNG/WEBP, max 6 MB<input id="submission-cover" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required></label>
+    <label class="dev-file-field">Game ZIP · 45 MB default; up to 500 MB with Cloudflare R2<input id="submission-build" type="file" accept=".zip,application/zip" required></label>
+    <label class="dev-file-field full-field">Screenshots · optional, up to 3 images<input id="submission-shots" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple></label>
+    <label class="check-label full-field"><input id="submission-cards" type="checkbox"> This game may support collectible cards in a future release</label>
+    <label class="check-label full-field"><input id="submission-rights" type="checkbox" required> I own or have permission to distribute this game and all included artwork/files.</label>
+    <p class="muted full-field">Paid games can be approved as listings, but checkout and paid downloads stay disabled until payments and developer payouts are implemented. Never upload passwords, secret keys or unlicensed games.</p>
+    <button id="developer-submit" class="primary full-field" type="submit">Submit game + upload files →</button>
+    <p id="developer-upload-status" class="full-field dev-progress" role="status" aria-live="polite"></p>
+   </form>
+  </div>
+  <div class="panel"><div class="section-title"><h2>Your releases</h2><span class="muted">Pending • Approved • Rejected</span></div><div id="developer-submissions" class="muted">Loading…</div><p class="muted">If an upload fails, use the “Attach files” buttons on the pending submission to finish it without submitting the game twice.</p></div>
+  <div class="panel earnings-panel"><div><small>PLATFORM REVENUE</small><h2>90% developer / 10% FluxVerse — planned</h2><p class="muted">No payments, checkout, sales ledger, refunds or payouts are active. Stats show free claims and requests for download links—not purchases or completed downloads.</p></div><div class="split-card"><b>90%</b><span>Developer share (proposed)</span></div></div>
  </div>
- <div id="admin-tools" class="panel hidden"><div class="section-title"><div><small>ADMIN ONLY</small><h2>Review queue</h2></div><span class="status-pill">Administrator</span></div><h3>Developer applications</h3><div id="admin-applications" class="muted">Loading…</div><h3>Game submissions</h3><div id="admin-games" class="muted">Loading…</div></div>
+ <div id="admin-tools" class="panel hidden"><div class="section-title"><div><small>ADMIN ONLY</small><h2>Review &amp; publish</h2></div><span class="status-pill">Administrator</span></div><p class="muted">Examine ownership, screenshots and game files before approval. ZIP downloads may contain executable files; scan them and only test in an isolated environment. Approval publishes the listing to All Games.</p><h3>Developer applications</h3><div id="admin-applications" class="muted">Loading…</div><h3>Game submissions</h3><div id="admin-games" class="muted">Loading…</div></div>
+ <input id="attach-cover" class="hidden" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+ <input id="attach-build" class="hidden" type="file" accept=".zip,application/zip">
+ <input id="attach-shots" class="hidden" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple>
 </section>
 <footer><a class="brand"><b>F</b> FLUX<span>VERSE</span></a><span>Made for players, powered by community.</span><span>© 2026 FluxVerse</span></footer>
 </main>

@@ -14,9 +14,32 @@
 <main class="wrap">
 <div id="setup" class="notice hidden"><b>Supabase not connected.</b> Open <code>app.js</code> and replace the two configuration placeholders. Never put a service-role key in this file.</div>
 <section id="page-store" class="page active">
-<div class="hero"><div class="hero-copy"><small>YOUR UNIVERSE. YOUR GAMES.</small><h1>Find your next<br><em>obsession.</em></h1><p>Discover games, build your library, and find your people. Welcome to a universe made for players.</p><button class="primary" data-go="library">Explore your library ↗</button></div><div class="orb"><span>PLAY<br>BEYOND</span></div></div>
-<div class="heading"><div><small>CURATED FOR YOU</small><h2>Featured games</h2></div></div><div id="featured" class="games"></div>
-<div class="heading discover-heading"><div><small>EXPLORE THE CATALOG</small><h2 id="browse-title">Discover games</h2></div><input id="search" placeholder="Search games by title or genre…" aria-label="Search games"></div><div class="genre-browser"><div class="genre-top"><div><small>BROWSE BY CATEGORY</small><h3>Find your kind of game</h3></div><span id="game-count">0 games</span></div><div id="genres" class="genre-list" aria-label="Game genres"></div></div><div id="games" class="games"></div>
+ <div class="store-layout">
+  <aside class="store-sidebar">
+   <div class="sidebar-label">DISCOVER</div>
+   <button class="side-link selected" data-page="store">⌂ <span>Store Home</span></button>
+   <button class="side-link" data-page="library">▣ <span>My Library</span></button>
+   <button class="side-link" data-page="community">◉ <span>Community</span></button>
+   <button class="side-link" data-page="friends">♧ <span>Friends</span></button>
+   <button class="side-link" data-page="developer">⌘ <span>Developer Portal</span></button>
+   <div class="sidebar-divider"></div>
+   <div class="sidebar-label">BROWSE BY GENRE</div>
+   <div id="genres" class="sidebar-genres" aria-label="Scrollable game genres"></div>
+   <div class="sidebar-promo"><span class="promo-icon">✦</span><b>Build your collection</b><p>Discover games and add your favorites to your library.</p><button class="side-promo-button" data-page="library">View Library →</button></div>
+  </aside>
+  <div class="store-main">
+   <div class="store-search-row"><div><small class="eyebrow">YOUR NEXT ADVENTURE STARTS HERE</small><h1>Discover <em>your next game.</em></h1></div><input id="search" placeholder="Search games..." aria-label="Search games"></div>
+   <div class="store-hero"><div class="store-hero-copy"><span class="hero-label">✦ THE FLUXVERSE STORE</span><h2>Play beyond<br><em>ordinary.</em></h2><p>Find your next favorite game, explore new worlds, and build your collection.</p><button class="primary" data-scroll="featured">Explore featured games ↗</button></div><div class="hero-orbit"><span>FLUX<br>VERSE</span></div><div class="hero-dots"><i></i><i></i><i></i></div></div>
+   <div class="promo-grid">
+    <article class="promo-card deal-promo"><div><span class="promo-kicker">✧ SPECIAL OFFERS</span><h3>Limited-time<br><em>deals & savings</em></h3><p>Look out for discounted games and seasonal offers.</p><button class="promo-action" data-scroll="deals">Explore deals →</button></div><div class="promo-art deal-art">％</div></article>
+    <article class="promo-card weekend-promo"><div><span class="promo-kicker">▣ PLAY FOR FREE</span><h3>Free<br><em>weekends</em></h3><p>Try featured games during developer-hosted free weekends.</p><span class="coming-label">WEEKEND EVENTS COMING SOON</span></div><div class="promo-art weekend-art">⌁</div></article>
+   </div>
+   <div class="store-section" id="featured"><div class="store-section-heading"><div><small class="eyebrow">HAND-PICKED FOR YOU</small><h2>Featured games</h2></div><span class="section-note">Discover something new</span></div><div id="featured-games" class="store-game-grid"></div></div>
+   <div class="store-section" id="deals"><div class="store-section-heading"><div><small class="eyebrow">DON'T MISS OUT</small><h2>Deals & offers</h2></div><span class="section-note">Promotions will appear here when active</span></div><div id="deals-games" class="store-game-grid"></div></div>
+   <div class="store-section"><div class="store-section-heading"><div><small class="eyebrow">JUMP IN WITHOUT SPENDING</small><h2>Free to Play</h2></div><span class="section-note">Free games in the catalog</span></div><div id="free-games" class="store-game-grid"></div></div>
+   <div class="store-section"><div class="store-section-heading"><div><small class="eyebrow">FRESH WORLDS TO EXPLORE</small><h2>All games</h2></div><span id="game-count" class="section-note">0 games</span></div><div id="games" class="store-game-grid"></div></div>
+  </div>
+ </div>
 </section>
 <section id="page-library" class="page"><div class="pagehead"><small>YOUR COLLECTION</small><h1>Your <em>library.</em></h1><p>Every adventure starts somewhere.</p></div><div id="library-list" class="games"></div></section>
 <section id="page-community" class="page"><div class="pagehead"><small>THE PLAYER LOUNGE</small><h1>Community <em>hub.</em></h1><p>Talk games, share your thoughts, meet your next squad.</p></div><form id="post-form" class="panel"><textarea id="post-text" maxlength="5000" placeholder="What's happening in your gaming universe?" required></textarea><button class="primary">Post ↗</button></form><div id="posts"></div></section>

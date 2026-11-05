@@ -30,26 +30,71 @@ function setMode(mode){authMode=mode;document.querySelectorAll("[data-mode]").fo
 function page(name){document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===`page-${name}`));document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===name));document.querySelectorAll(".side-link").forEach(b=>b.classList.toggle("selected",b.dataset.page===name));if(name==="library")loadLibrary();if(name==="wishlist")loadWishlist().then(renderWishlistPage);if(name==="community")loadPosts();if(name==="friends")loadFriends();if(name==="developer")loadDeveloperPortal();scrollTo({top:0,behavior:"smooth"});}
 function coverFor(g){const raw=g.image_url||g.cover_url||g.thumbnail_url||g.banner_url||"";return /^https?:\/\//i.test(String(raw))?String(raw):"";}
 function card(g){let i=[...g.title].reduce((a,c)=>a+c.charCodeAt(0),0)%palettes.length;let sig=g.title.split(/\s+/).map(w=>w[0]).join("").slice(0,2);let id=String(g.id);let free=Number(g.price_cents)===0;let owned=libraryIds.has(id);let wished=wishlistIds.has(id);let action=free?"add":"wish";let label=free?(owned?"In Library":"Add to Library"):(wished?"In Wishlist":"♡ Wishlist");let image=coverFor(g);let extra=owned&&free&&g.source_submission_id?`<button class="small" data-download="${esc(id)}">↓ Download ZIP</button>`:"";return `<article class="game"><div class="cover ${image?"has-image":""}" style="--cover:${palettes[i]}">${image?`<img src="${esc(image)}" alt="${esc(g.title)} cover" loading="lazy">`:``}<span class="tag">${esc(g.genre||"Game")}</span>${image?"":`<b>${esc(sig)}</b>`}</div><div class="game-info"><div class="meta"><span>${esc(g.genre||"Uncategorized")}</span><span>FLUXVERSE</span></div><h3>${esc(g.title)}</h3><p>${esc(g.description||"Discover your next adventure.")}</p><div class="game-bottom"><span class="price">${money(g.price_cents)}</span><button class="small" data-game="${esc(id)}" data-action="${action}" ${owned?"disabled":""}>${label}</button>${extra}</div></div></article>`;}
-function renderHero(){let hero=$("store-hero");$("hero-title").textContent="Enter the City";$("hero-description").textContent="Experience the ultimate open-world RPG in a dystopian future.";hero.style.setProperty("--hero-image",`url("assets/reference-hero.jpg")`);}
-function renderGenres(){
- const actual=[...new Set(games.map(g=>(g.genre||"").trim()).filter(Boolean))];
- const genres=[...storeGenres,...actual.filter(x=>!storeGenres.some(y=>y.toLowerCase()===x.toLowerCase()))];
- $("genres").innerHTML=genres.map(genre=>{const icon=genre==="Free to Play"?"♙":genreIcons[genre]||"🎮";const active=activeGenre.toLowerCase()===genre.toLowerCase();return `<button class="genre-chip ${active?"active":""}" data-genre="${esc(genre)}"><span>${icon}</span>${esc(genre)}</button>`;}).join("");
+// Homepage featured artwork and mockup cards. Not checkout products or active events.
+const fxSlides = [
+ {title:'VOIDBORN',sub:'A Sci-Fi Open World Survival',image:'fx-voidborn.jpg',thumb:'fx-carousel-1.jpg'},
+ {title:'NEW WORLDS',sub:'Discover games beyond the horizon',image:'fx-portal.jpg',thumb:'fx-carousel-2.jpg'},
+ {title:'STARBORNE',sub:'Explore new worlds across the stars',image:'fx-starborne.jpg',thumb:'fx-carousel-3.jpg'},
+ {title:'FROSTLINE',sub:'Adventure beyond the frozen frontier',image:'fx-frostline.jpg',thumb:'fx-carousel-4.jpg'}
+];
+let fxCurrentSlide=0, fxExpandedGenres=false;
+function fxSetSlide(index){
+ fxCurrentSlide=(index+fxSlides.length)%fxSlides.length;
+ const slide=fxSlides[fxCurrentSlide],stage=$('fx-feature-stage');if(!stage)return;
+ stage.classList.toggle('fx-first-slide',fxCurrentSlide===0);
+ stage.style.backgroundImage=fxCurrentSlide===0?'url("assets/fx-voidborn-full.jpg")':`linear-gradient(90deg,#030916e6 0%,#03091699 32%,#03091605 72%),url("assets/${slide.image}")`;
+ $('fx-feature-heading').textContent=slide.title;$('fx-feature-subtitle').textContent=slide.sub;
+ document.querySelectorAll('#fx-thumbs button').forEach((b,i)=>{b.classList.toggle('selected',i===fxCurrentSlide);b.setAttribute('aria-pressed',String(i===fxCurrentSlide));});
+ document.querySelectorAll('#fx-slide-dots button').forEach((b,i)=>{b.classList.toggle('selected',i===fxCurrentSlide);b.setAttribute('aria-pressed',String(i===fxCurrentSlide));});
 }
-// Screenshot-matched storefront preview. These are illustrative artwork cards, NOT live products or sale prices.
-const previewFeatured=[['elden','Elden Ring','$59.99'],['hogwarts','Hogwarts Legacy','$59.99'],['reddead','Red Dead Redemption II','$59.99'],['stardew','Stardew Valley','$14.99']];
-const previewFree=[['fortnite','Fortnite'],['valorant','Valorant'],['apex','Apex Legends'],['warframe','Warframe']];
-const previewDeals=[['starfield','Starfield','-30%'],['witcher','The Witcher 3','-70%'],['diablo','Diablo IV','-40%']];
-function previewCard(x,kind){return `<article class="preview-card"><img src="assets/${x[0]}.jpg" alt="${esc(x[1])} promotional artwork"><div class="preview-card-body"><b>${esc(x[1])}</b><div>${kind==='free'?'Free to play (reference example)':kind==='deals'?`<span class="discount">${esc(x[2])}</span> Illustrative discount`:esc(x[2])}</div></div></article>`;}
+function renderHero(){
+ if(!$('fx-thumbs'))return;
+ $('fx-thumbs').innerHTML=fxSlides.map((s,i)=>`<button type="button" data-slide="${i}" aria-label="Featured slide ${i+1}"><img src="assets/${s.thumb}" alt="" loading="lazy"></button>`).join('');
+ $('fx-slide-dots').innerHTML=fxSlides.map((_,i)=>`<button type="button" data-slide="${i}" aria-label="Slide ${i+1}"></button>`).join('');
+ fxSetSlide(fxCurrentSlide);
+}
+function renderGenres(){
+ const actual=[...new Set(games.map(g=>(g.genre||'').trim()).filter(Boolean))];
+ const preferred=['Action','Adventure','RPG','Simulation','Strategy','Horror','Survival','Racing','Sports','Indie'];
+ const genres=[...preferred,...storeGenres.filter(x=>!preferred.includes(x)),...actual.filter(x=>!storeGenres.some(y=>y.toLowerCase()===x.toLowerCase()))];
+ $('genres').innerHTML=genres.map((genre,i)=>{
+  const active=activeGenre.toLowerCase()===genre.toLowerCase();
+  return `<button class="genre-chip ${active?'active':''} ${i>=10?'fx-extra-genre':''}" data-genre="${esc(genre)}" type="button">${esc(genre)}</button>`;
+ }).join('');
+ $('genres').classList.toggle('fx-show-all',fxExpandedGenres);
+ $('more-genres').textContent=fxExpandedGenres?'Show Less':'View All';
+}
+const fxOffers=[
+ ['fx-riftwalkers.jpg','Riftwalkers','-50%','$29.99','$14.99'],
+ ['fx-ashenfall.jpg','Ashenfall','-40%','$39.99','$23.99'],
+ ['fx-neon-drive.jpg','Neon Drive','-60%','$19.99','$7.99']
+];
+const fxWeekends=[
+ ['fx-frontline.jpg','Frontline'],['fx-skyfront.jpg','Skyfront'],['fx-deepwater.jpg','Deepwater']
+];
+const fxReleases=[
+ ['fx-crimson-tide.jpg','Crimson Tide'],['fx-starborne.jpg','Starborne'],['fx-frostline.jpg','Frostline'],['fx-volt-racing.jpg','Volt Racing'],['fx-the-last-ember.jpg','The Last Ember']
+];
+function fxArtCard(x,kind){
+ let footer=kind==='deals'?`<span class="fx-sale">${esc(x[2])}</span><del>${esc(x[3])}</del><span class="fx-card-price">${esc(x[4])}</span>`:kind==='weekend'?'<span class="fx-free-badge">FREE WEEKEND</span>':`<small>Explore New Releases</small>`;
+ return `<button class="fx-art-card ${kind==='weekend'?'fx-free':''}" type="button" data-preview="${esc(x[1])}" aria-label="${esc(x[1])} concept preview — browse available games"><img src="assets/${x[0]}" alt="${esc(x[1])} concept art" loading="lazy"><span class="fx-card-bottom">${footer}</span></button>`;
+}
 function renderGames(){
- $("featured-games").innerHTML=previewFeatured.map(x=>previewCard(x,'featured')).join('');
- $("free-games").innerHTML=previewFree.map(x=>previewCard(x,'free')).join('');
- $("deals-games").innerHTML=previewDeals.map(x=>previewCard(x,'deals')).join('');
- $("daily-deal-list").innerHTML=[['deal-elden','Elden Ring','-40%'],['deal-reddead','Red Dead Redemption II','-67%'],['deal-hogwarts','Hogwarts Legacy','-50%']].map(x=>`<div class="preview-daily"><img src="assets/${x[0]}.jpg" alt="${esc(x[1])} cover"><div><b>${esc(x[1])}</b><span class="discount">${x[2]}</span><small>Preview offer</small></div></div>`).join('');
- renderHero();renderGenres();renderAll($("search").value);
+ $('deals-games').innerHTML=fxOffers.map(x=>fxArtCard(x,'deals')).join('');
+ $('free-games').innerHTML=fxWeekends.map(x=>fxArtCard(x,'weekend')).join('');
+ $('featured-games').innerHTML=fxReleases.map(x=>fxArtCard(x,'release')).join('');
+ renderHero();renderGenres();renderAll($('search').value);
+}
+function fxStoreNavigate(target){
+ if(!document.getElementById('page-store').classList.contains('active'))page('store');
+ if(target==='home'){window.scrollTo({top:0,behavior:'smooth'});return;}
+ if(target==='all'){activeGenre='All';renderGenres();renderAll($('search').value);document.getElementById('all-games').scrollIntoView({behavior:'smooth'});return;}
+ if(target==='free'){activeGenre='Free to Play';renderGenres();renderAll($('search').value);document.getElementById('all-games').scrollIntoView({behavior:'smooth'});return;}
+ const ids={deals:'deals',weekends:'free-weekends',new:'new-releases'};
+ document.getElementById(ids[target]||'all-games').scrollIntoView({behavior:'smooth'});
 }
 function renderAll(term=""){let list=games.filter(g=>{let matchesText=`${g.title} ${g.genre} ${g.description}`.toLowerCase().includes(term.toLowerCase());let matchesGenre=activeGenre==="All"||(activeGenre==="Free to Play"?Number(g.price_cents)===0:(g.genre||"Uncategorized").toLowerCase()===activeGenre.toLowerCase());return matchesText&&matchesGenre;});$("games").innerHTML=list.length?list.map(card).join(""):'<div class="empty">No games found in this genre. Try another category or search.</div>';$("game-count").textContent=`${list.length} ${list.length===1?"game":"games"}`;}
-async function loadGames(){if(!db){games=demo;renderGames();return;}let {data,error}=await db.from("games").select("*").order("featured",{ascending:false}).order("title");if(error){toast(error.message);games=demo;}else games=data||[];renderGames();}
+async function loadGames(){if(!db){games=[];renderGames();return;}let {data,error}=await db.from("games").select("*").order("featured",{ascending:false}).order("title");if(error){toast(error.message);games=[];}else games=data||[];renderGames();}
 async function updateUser(){if(!user){profile=null;wishlistIds.clear();libraryIds.clear();$("auth-open").classList.remove("hidden");$("user-chip").classList.add("hidden");renderGames();$("library-list").innerHTML='<div class="empty">Sign in to see your library.</div>';return;}let {data}=await db.from("profiles").select("*").eq("id",user.id).maybeSingle();profile=data||{username:user.email?.split("@")[0],display_name:"Player"};$("auth-open").classList.add("hidden");$("user-chip").classList.remove("hidden");$("user-label").textContent=profile.display_name||profile.username;await Promise.all([loadLibrary(),loadWishlist()]);loadFriends();if(document.getElementById("page-developer").classList.contains("active"))loadDeveloperPortal();}
 async function renderWishlistPage(){if(!user){$("wishlist-list").innerHTML='<div class="empty">Sign in to see your wishlist.</div>';return;}const list=games.filter(g=>wishlistIds.has(String(g.id)));$("wishlist-list").innerHTML=list.length?list.map(card).join(''):'<div class="empty">No wishlisted games yet. Browse All Games and save one!</div>';}
 async function loadLibrary(){if(!user){libraryIds.clear();$("library-list").innerHTML='<div class="empty">Sign in to see your library.</div>';return;}let {data,error}=await db.from("library").select("game_id,games(*)").eq("user_id",user.id);if(error){$("library-list").textContent=error.message;return;}let rows=data||[];libraryIds.clear();rows.forEach(x=>libraryIds.add(String(x.game_id)));let list=rows.map(x=>x.games).filter(Boolean);$("library-list").innerHTML=list.length?list.map(card).join(""):'<div class="empty">Your library is waiting for its first game. Add a free game from the Store!</div>';renderGames();}
@@ -248,8 +293,22 @@ async function loadAdminQueue(){
  }).join(''):'<p class="muted">No pending game submissions.</p>';
 }
 
-async function init(){if(!db){$("setup").classList.remove("hidden");$("status").textContent="Not connected";games=demo;renderGames();$("posts").innerHTML='<div class="empty">Connect Supabase to activate the community feed.</div>';return;}let {error}=await db.from("games").select("id").limit(1);$("status").textContent=error?"Database issue":"Connected";await loadGames();let {data}=await db.auth.getSession();user=data.session?.user||null;await updateUser();loadPosts();db.auth.onAuthStateChange((_e,s)=>{user=s?.user||null;setTimeout(updateUser,0);});}
+async function init(){if(!db){$("setup").classList.remove("hidden");$("status").textContent="Not connected";games=[];renderGames();$("posts").innerHTML='<div class="empty">Connect Supabase to activate the community feed.</div>';return;}let {error}=await db.from("games").select("id").limit(1);$("status").textContent=error?"Database issue":"Connected";await loadGames();let {data}=await db.auth.getSession();user=data.session?.user||null;await updateUser();loadPosts();db.auth.onAuthStateChange((_e,s)=>{user=s?.user||null;setTimeout(updateUser,0);});}
 document.addEventListener("click",async e=>{
+ const storeNav=e.target.closest('[data-store-nav]');if(storeNav){fxStoreNavigate(storeNav.dataset.storeNav);document.getElementById('discover-menu')?.classList.add('hidden');return;}
+ const slide=e.target.closest('[data-slide]');if(slide){fxSetSlide(Number(slide.dataset.slide));return;}
+ if(e.target.closest('#feature-previous')){fxSetSlide(fxCurrentSlide-1);return;}
+ if(e.target.closest('#feature-next')){fxSetSlide(fxCurrentSlide+1);return;}
+ if(e.target.closest('#feature-action')){toast('Featured artwork is a concept. Browse real available games below.');fxStoreNavigate('all');return;}
+ if(e.target.closest('#watch-trailer')){toast('Trailer playback will be available for games whose developers provide trailers.');return;}
+ if(e.target.closest('#discover-toggle')){const menu=$('discover-menu');menu.classList.toggle('hidden');$('discover-toggle').setAttribute('aria-expanded',String(!menu.classList.contains('hidden')));return;}
+ if(e.target.closest('#notifications-button')){page('friends');toast('Friend requests are in your Friends tab.');return;}
+ const preview=e.target.closest('[data-preview]');if(preview){const name=preview.dataset.preview;toast(`${name} is concept artwork, not a live store offer. Browse real games below.`);fxStoreNavigate('all');return;}
+ const quick=e.target.closest('[data-quick]');if(quick){document.querySelectorAll('[data-quick]').forEach(x=>x.classList.toggle('selected',x===quick));if(quick.dataset.quick!=='trending')toast('This ranking is a visual preview. Game ratings and release data are not live yet.');fxStoreNavigate('all');return;}
+ if(e.target.closest('#more-genres')){fxExpandedGenres=!fxExpandedGenres;renderGenres();return;}
+ if(e.target.closest('#genre-toggle')){const genres=$('genres'),opening=genres.classList.contains('collapsed');genres.classList.toggle('collapsed',!opening);$('genre-toggle').setAttribute('aria-expanded',String(opening));return;}
+ const genrePick=e.target.closest('[data-genre]');if(genrePick){activeGenre=genrePick.dataset.genre;fxStoreNavigate('all');activeGenre=genrePick.dataset.genre;renderGenres();renderAll($('search').value);return;}
+
  const download=e.target.closest('[data-download]');
  if(download){await fvDownloadBuild(download.dataset.download);return;}
  const reviewDownload=e.target.closest('[data-review-download]');
@@ -274,6 +333,7 @@ document.addEventListener("click",async e=>{
 if(e.target.closest("#genre-toggle")||e.target.closest("#more-genres")){const box=$("genres"),toggle=$("genre-toggle");const opening=box.classList.contains("collapsed");box.classList.toggle("collapsed",!opening);toggle.setAttribute("aria-expanded",String(opening));$("genre-chevron").textContent=opening?"⌃":"⌄";return;}let n=e.target.closest("[data-page]");if(n){page(n.dataset.page);return;}let sc=e.target.closest("[data-scroll]");if(sc){document.getElementById(sc.dataset.scroll)?.scrollIntoView({behavior:"smooth",block:"start"});return;}let go=e.target.closest("[data-go]");if(go){page(go.dataset.go);return;}let genre=e.target.closest("[data-genre]");if(genre){activeGenre=genre.dataset.genre;renderGenres();renderAll($("search").value);return;}if(e.target.id==="auth-open"){openAuth("login");return;}if(e.target.matches("[data-close]")){closeAuth();return;}let m=e.target.closest("[data-mode]");if(m){setMode(m.dataset.mode);return;}let g=e.target.closest("[data-game]");if(g){if(!needLogin())return;let gameId=g.dataset.game;if(g.dataset.action==="add"){if(libraryIds.has(gameId)){toast("This game is already in your library.");return;}let listing=games.find(x=>String(x.id)===gameId);let {error}=listing?.source_submission_id?await db.rpc("fv_claim_free_game",{p_game_id:gameId}):await db.from("library").upsert({user_id:user.id,game_id:gameId});if(error){toast(error.message);return;}libraryIds.add(gameId);toast("Added to your library!");await loadLibrary();renderGames();}else{if(wishlistIds.has(gameId)){let {error}=await db.from("wishlist").delete().eq("user_id",user.id).eq("game_id",gameId);if(error){toast(error.message);return;}wishlistIds.delete(gameId);toast("Removed from your wishlist.");}else{let {error}=await db.from("wishlist").upsert({user_id:user.id,game_id:gameId});if(error){toast(error.message);return;}wishlistIds.add(gameId);toast("Added to your wishlist!");}renderGames();if(document.getElementById("page-wishlist").classList.contains("active"))renderWishlistPage();}return;}let a=e.target.closest("[data-accept]");if(a){let {error}=await db.from("friend_requests").update({status:"accepted"}).eq("id",a.dataset.accept);toast(error?error.message:"Friend request accepted!");loadFriends();return;}let s=e.target.closest("[data-send]");if(s){let {error}=await db.from("friend_requests").insert({sender_id:user.id,receiver_id:s.dataset.send});toast(error?error.message:"Friend request sent!");loadFriends();return;}if(e.target.id==="developer-signin"){openAuth("login");return;}let aa=e.target.closest("[data-admin-app]");if(aa){let {error}=await db.from("developer_applications").update({status:aa.dataset.status,reviewed_at:new Date().toISOString()}).eq("id",aa.dataset.adminApp);toast(error?error.message:"Application "+aa.dataset.status+".");loadDeveloperPortal();return;}let ag=e.target.closest("[data-admin-game]");if(ag){let {error}=await db.from("developer_game_submissions").update({status:ag.dataset.status,reviewed_at:new Date().toISOString()}).eq("id",ag.dataset.adminGame);toast(error?error.message:"Game submission "+ag.dataset.status+".");loadAdminQueue();return;}if(e.target.id==="sign-out"){await db.auth.signOut();toast("Signed out.");}});
 $("auth-form").addEventListener("submit",async e=>{e.preventDefault();if(!db){toast("Add Supabase settings to app.js first.");return;}let email=$("email").value.trim(),password=$("password").value,msg=$("auth-message");msg.textContent="Please wait…";let result;if(authMode==="signup"){let username=$("username").value.trim().toLowerCase(),display_name=$("display").value.trim()||username;if(!/^[a-z0-9_]{3,24}$/.test(username)){msg.textContent="Username: 3–24 letters, numbers or underscores.";return;}result=await db.auth.signUp({email,password,options:{data:{username,display_name}}});}else result=await db.auth.signInWithPassword({email,password});if(result.error){msg.textContent=result.error.message;return;}if(authMode==="signup"&&!result.data.session){msg.textContent="Account created! Check your email to confirm, then sign in.";return;}closeAuth();$("auth-form").reset();toast("Welcome to FluxVerse!");});
 $("search").addEventListener("input",e=>renderAll(e.target.value));
+$("search").addEventListener("keydown",e=>{if(e.key==='Enter'){e.preventDefault();page('store');$('all-games').scrollIntoView({behavior:'smooth'});}});
 $("post-form").addEventListener("submit",async e=>{e.preventDefault();if(!needLogin())return;let content=$("post-text").value.trim();if(!content)return;let {error}=await db.from("posts").insert({user_id:user.id,content});if(error)toast(error.message);else{$("post-text").value="";toast("Your post is live!");loadPosts();}});
 $("friend-form").addEventListener("submit",async e=>{e.preventDefault();if(!needLogin())return;let name=$("friend-name").value.trim().replace(/^@/,"");let {data,error}=await db.from("profiles").select("id,username,display_name").ilike("username",name).limit(5);if(error){$("friend-results").textContent=error.message;return;}let found=(data||[]).filter(p=>p.id!==user.id);$("friend-results").innerHTML=found.length?found.map(p=>`<div class="person"><span class="avatar">${initials(p.display_name)}</span><div style="flex:1"><b>${esc(p.display_name)}</b><small>@${esc(p.username)}</small></div><button class="small" data-send="${p.id}">Add friend</button></div>`).join(""):'<div class="empty">No player found with that exact username.</div>';});
 

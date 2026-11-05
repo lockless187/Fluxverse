@@ -25,23 +25,26 @@
 <section id="page-store" class="page active">
  <div class="store-layout">
   <aside class="store-sidebar">
-   <h3>Browse Categories</h3>
+   <button class="genre-toggle" id="genre-toggle" type="button" aria-expanded="false" aria-controls="genres"><span>☷ &nbsp;Browse Categories</span><b id="genre-chevron">⌄</b></button>
    <button class="side-link selected" data-genre="All"><span>▦</span> All Games</button>
    <div id="genres" class="sidebar-genres" aria-label="Scrollable game genres"></div>
-   <div class="sidebar-promo"><div class="promo-crown">♛</div><b>Become a Developer</b><p>Publish your games on FluxVerse!</p><button class="side-promo-button" data-page="developer">Learn More →</button></div>
+   <button class="more-genres" id="more-genres" type="button">More Categories <span>›</span></button>
+   <div class="sidebar-promo free-sidebar-promo"><div class="promo-crown">♛</div><b>Free to Play</b><p>Play amazing games for free!</p><button class="side-promo-button" data-genre="Free to Play">Browse Free Games →</button></div>
   </aside>
   <div class="store-main">
    <div class="store-top-grid">
-    <div class="store-hero" id="store-hero"><div class="store-hero-copy"><span class="hero-label">✦ FEATURED ON FLUXVERSE</span><h2 id="hero-title">Discover your<br><em>next adventure.</em></h2><p id="hero-description">Explore new worlds, find your next favorite game, and build your collection.</p><button class="primary" data-scroll="featured">Explore Games ▶</button></div><div class="hero-dots"><i></i><i></i><i></i><i></i><i></i></div></div>
+    <div class="store-hero" id="store-hero"><div class="store-hero-copy"><span class="hero-label">✦ FEATURED ON FLUXVERSE</span><h2 id="hero-title">Enter the City</h2><p id="hero-description">Experience the ultimate open-world RPG in a dystopian future.</p><button class="primary" data-scroll="featured">Shop Now →</button></div><div class="hero-dots"><i></i><i></i><i></i><i></i><i></i></div></div>
     <aside class="daily-deals"><div class="rail-heading"><h3>◷ Daily Deals</h3><button data-scroll="deals">View All →</button></div><div id="daily-deal-list"><div class="deal-placeholder">Special offers will appear here when active.</div></div></aside>
    </div>
    <div class="feature-weekend-grid">
     <section class="store-section featured-section" id="featured"><div class="store-section-heading"><h2>★ &nbsp;Featured Games</h2><button data-scroll="all-games">View All →</button></div><div id="featured-games" class="store-game-grid"></div></section>
-    <article class="weekend-banner"><div class="weekend-copy"><span>🎁 &nbsp;LIMITED-TIME EVENT</span><h2>Free Weekend</h2><p>Play selected games for free during special weekend events.</p><small>WEEKEND EVENTS COMING SOON</small></div></article>
+    <article class="weekend-banner"><div class="weekend-copy"><span>🎁</span><h2>Free Weekend</h2><p>Play for free this weekend!</p><button class="primary" data-scroll="all-games">Play Free Now →</button></div></article>
    </div>
-   <div class="store-section" id="deals"><div class="store-section-heading"><h2>◆ &nbsp;Special Deals</h2><span class="section-note">Discounts from participating developers</span></div><div id="deals-games" class="store-game-grid deals-grid"></div></div>
-   <div class="store-section"><div class="store-section-heading"><h2>🎁 &nbsp;Free to Play</h2><button data-genre="Free to Play">View All →</button></div><div id="free-games" class="store-game-grid"></div></div>
-   <div class="store-section" id="all-games"><div class="store-section-heading"><h2>🔥 &nbsp;New & Popular</h2><span id="game-count" class="section-note">0 games</span></div><div id="games" class="store-game-grid"></div></div>
+   <div class="store-bottom-grid">
+    <div class="store-section" id="free-to-play-section"><div class="store-section-heading"><h2>◆ &nbsp;Free to Play</h2><button data-genre="Free to Play">See All →</button></div><div id="free-games" class="store-game-grid"></div></div>
+    <div class="store-section" id="deals"><div class="store-section-heading"><h2>🔥 &nbsp;Special Deals</h2><button data-scroll="all-games">See All →</button></div><div id="deals-games" class="store-game-grid deals-grid"></div></div>
+   </div>
+   <div class="store-section" id="all-games"><div class="store-section-heading"><h2>⌁ &nbsp;All Games</h2><span id="game-count" class="section-note">0 games</span></div><div id="games" class="store-game-grid"></div></div>
   </div>
  </div>
 </section>

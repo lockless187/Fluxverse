@@ -912,6 +912,7 @@ function fv8AuthPane(which='login'){
  $('fv8-auth-links').classList.toggle('hidden',!sign || authMode==='signup');
  $('fv8-forgot-password-form').classList.toggle('hidden',which!=='password');
  $('fv8-forgot-email-form').classList.toggle('hidden',which!=='email');
+ $('fv81-track-form').classList.toggle('hidden',which!=='track');
  if(which==='password')$('fv8-reset-email').value=$('email').value||'';
  if(which!=='login')$('modal').classList.remove('hidden');
 }
@@ -1018,9 +1019,20 @@ async function fv8LoadRecoveryRequests(){
  const {data:admin,error:adminError}=await db.rpc('is_fluxverse_admin');
  if(adminError || admin!==true){section.classList.add('hidden');return;}
  section.classList.remove('hidden');
- const {data,error}=await db.rpc('fv8_admin_recovery_requests');
- if(error){$('fv8-recovery-list').textContent='Recovery queue unavailable: '+error.message;return;}
- $('fv8-recovery-list').innerHTML=(data||[]).length?(data||[]).map(r=>`<div class="fv7-report-card"><b>@${esc(r.claimed_username)} · ${esc(r.status)}</b><p>Reply-to: ${esc(r.contact_email)}</p><p>${esc(r.details||'No extra details provided')}</p><small>${esc(r.created_at)}</small>${r.status==='open'?`<button type="button" data-fv8-recovery-review="${esc(r.id)}">Mark reviewed</button>`:''}</div>`).join(''):'<p class="muted">No account recovery requests.</p>';
+ const {data,error}=await db.rpc('fv81_admin_cases');
+ if(error){$('fv8-recovery-list').textContent='Recovery inbox unavailable: '+error.message;return;}
+ const rows=Array.isArray(data)?data:[];
+ $('fv8-recovery-list').innerHTML=rows.length?rows.map(r=>{
+  const history=(r.messages||[]).map(m=>`<p class="fv81-msg ${m.author==='staff'?'staff':''}"><b>${m.author==='staff'?'FluxVerse support':'Requester'}:</b> ${esc(m.body)}</p>`).join('');
+  const states=['open','reviewed','waiting_for_player','resolved','declined'];
+  const opts=states.map(st=>`<option value="${st}" ${r.status===st?'selected':''}>${st.replaceAll('_',' ')}</option>`).join('');
+  return `<article class="fv81-case fv7-report-card"><b>@${esc(r.username)} · ${esc(r.status)}</b>
+   <p class="fv81-contact">Provided contact address: ${esc(r.contact_email)}</p><p>${esc(r.details||'No details provided')}</p>
+   <p class="fv81-proof ${r.verified?'verified':''}">${r.verified?'✓ Previously saved ownership proof verified':'Ownership not verified'}</p>
+   <small>${esc(r.created_at)} · ${r.has_tracking?'Private conversation enabled':'Older request — no tracking code (contact manually)'}</small>
+   <div class="fv81-history">${history||'<p class="muted">No messages yet.</p>'}</div>
+   <form class="fv81-admin-form" data-fv81-case-id="${esc(r.id)}">${r.has_tracking?'<label>Message to requester<textarea name="reply" rows="2" maxlength="1500" placeholder="Never include login emails, reset links, passwords, or private data"></textarea></label>':'<p class="fv81-legacy">This older request has no tracking code, so in-site replies are unavailable. Contact the requester through an independently verified channel.</p>'}<label>Case status<select name="status">${opts}</select></label><button class="outline" type="submit">Save status${r.has_tracking?' / reply':''}</button><small>${r.has_tracking?'Requester can read messages with their tracking code.':'Status changes are internal only for this older request.'}</small></form></article>`;
+ }).join(''):'<p class="muted">No recovery requests yet.</p>';
 }
 
 // Existing v7 navigation remains untouched; only refresh these security controls when relevant.
@@ -1064,10 +1076,14 @@ document.addEventListener('submit',async e=>{
  }
  if(e.target.id==='fv8-forgot-email-form'){
   e.preventDefault();const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;
-  const msg=$('fv8-email-status');msg.textContent='Submitting…';
-  try{const {error}=await db.rpc('fv8_request_email_recovery',{p_username:$('fv8-recovery-username').value.trim(),p_contact_email:$('fv8-recovery-contact').value.trim(),p_details:$('fv8-recovery-details').value.trim()});
+  const msg=$('fv8-email-status');msg.textContent='Submitting…';$('fv81-issued-box').classList.add('hidden');
+  try{
+   const {data,error}=await db.rpc('fv81_open_ticket',{p_username:$('fv8-recovery-username').value.trim(),p_contact_email:$('fv8-recovery-contact').value.trim(),p_details:$('fv8-recovery-details').value.trim()});
    if(error)throw error;
-   msg.textContent='Request received for manual review. We cannot confirm an account or reveal its email here. Keep access to your contact email.';
+   if(!data?.tracking_code)throw new Error('No tracking code received');
+   fv81TicketCode=data.tracking_code;
+   $('fv81-issued-code').value=fv81TicketCode;$('fv81-issued-box').classList.remove('hidden');
+   msg.textContent='Request received. Save the tracking code below before closing this window. Your account email has not been revealed or changed.';
    $('fv8-forgot-email-form').reset();
   }catch(err){msg.textContent='Could not submit request: '+err.message;}
   finally{btn.disabled=false;}
@@ -1110,5 +1126,86 @@ document.addEventListener('submit',async e=>{
   catch(err){$('fv8-mfa-status').textContent='Could not enable: '+err.message;}
   finally{btn.disabled=false;}
   return;
+ }
+});
+
+
+// ---------- FluxVerse v8.1: private support tickets + pre-enrolled backup proof ----------
+let fv81TicketCode='';
+async function fv81LoadTicket(){
+ const code=$('fv81-track-code').value.trim();
+ if(!code){$('fv81-track-status').textContent='Enter your tracking code.';return;}
+ $('fv81-track-status').textContent='Checking request…';
+ $('fv81-ticket-result').classList.add('hidden');
+ const {data,error}=await db.rpc('fv81_ticket_details',{p_tracking_code:code});
+ if(error){$('fv81-track-status').textContent=error.message;return;}
+ fv81TicketCode=code;
+ $('fv81-track-status').textContent='Request loaded.';
+ $('fv81-ticket-summary').innerHTML=`<p><b>Status:</b> ${esc((data?.status||'open').replaceAll('_',' '))}</p><p><b>Ownership proof:</b> ${data?.verified?'Verified using a previously saved FluxVerse recovery proof code':'Not verified'}</p>`;
+ $('fv81-ticket-messages').innerHTML=(data?.messages||[]).length?(data.messages||[]).map(m=>`<p class="fv81-msg ${m.author==='staff'?'staff':''}"><b>${m.author==='staff'?'FluxVerse support':'You'}:</b> ${esc(m.body)}</p>`).join(''):'<p class="muted">No replies yet. Check again later using the same code.</p>';
+ const closed=['resolved','declined'].includes(data?.status);
+ $('fv81-ticket-send').disabled=closed;
+ $('fv81-verify-proof').disabled=!!data?.verified || closed;
+ $('fv81-ticket-result').classList.remove('hidden');
+}
+async function fv81BackupStatus(){
+ if(!user)return;
+ const {data,error}=await db.rpc('fv81_backup_code_exists');
+ $('fv81-backup-status').textContent=error?'Code status unavailable: '+error.message:data?'Recovery proof code is on file. Keep your offline copy safe.':'No recovery proof code saved yet.';
+}
+const fv81PreviousPage=page;
+page=function(name){fv81PreviousPage(name);if(name==='profile')fv81BackupStatus();};
+document.addEventListener('click',async e=>{
+ if(e.target.closest('#fv81-to-track')||e.target.closest('#fv81-open-issued')){
+  fv8AuthPane('track');$('fv81-track-code').value=fv81TicketCode||'';
+  if(e.target.closest('#fv81-open-issued'))fv81LoadTicket();return;
+ }
+ if(e.target.closest('#fv81-copy-issued')){
+  try{await navigator.clipboard.writeText($('fv81-issued-code').value);toast('Tracking code copied.');}catch{toast('Select and copy the code manually.');}return;
+ }
+ if(e.target.closest('#fv81-copy-backup')){
+  try{await navigator.clipboard.writeText($('fv81-backup-value').textContent);toast('Proof code copied. Store it offline.');}catch{toast('Select and copy the code manually.');}return;
+ }
+ if(e.target.closest('#fv81-generate-backup')){
+  if(!user)return toast('Sign in first.');
+  if(!confirm('Generate a new recovery proof code? Any previous code will stop working. Store the new code offline.'))return;
+  const btn=$('fv81-generate-backup');btn.disabled=true;
+  try{
+   const {data,error}=await db.rpc('fv81_generate_backup_code');if(error)throw error;
+   $('fv81-backup-value').textContent=String(data||'');$('fv81-backup-result').classList.remove('hidden');
+   $('fv81-backup-status').textContent='New code generated. Save it securely now; it cannot be retrieved later.';
+  }catch(err){$('fv81-backup-status').textContent='Could not generate: '+err.message;}
+  finally{btn.disabled=false;}
+  return;
+ }
+ if(e.target.closest('#fv81-ticket-send')){
+  const msg=$('fv81-ticket-message').value.trim();if(!msg)return;
+  const btn=$('fv81-ticket-send');btn.disabled=true;
+  const {error}=await db.rpc('fv81_ticket_reply',{p_tracking_code:fv81TicketCode,p_message:msg});
+  if(error){$('fv81-track-status').textContent=error.message;btn.disabled=false;return;}
+  $('fv81-ticket-message').value='';await fv81LoadTicket();return;
+ }
+ if(e.target.closest('#fv81-verify-proof')){
+  const proof=$('fv81-proof-code').value.trim();if(!proof)return;
+  const btn=$('fv81-verify-proof');btn.disabled=true;
+  const {data,error}=await db.rpc('fv81_verify_backup_code',{p_tracking_code:fv81TicketCode,p_backup_code:proof});
+  $('fv81-proof-code').value='';
+  $('fv81-proof-status').textContent=error?error.message:data?'Ownership proof verified. FluxVerse staff must still process recovery securely.':'Verification failed or the code has expired. Do not share the code with anyone.';
+  if(data)await fv81LoadTicket();else btn.disabled=false;
+ }
+});
+document.addEventListener('submit',async e=>{
+ if(e.target.id==='fv81-track-form'){
+  e.preventDefault();await fv81LoadTicket();return;
+ }
+ if(e.target.classList.contains('fv81-admin-form')){
+  e.preventDefault();const form=e.target;
+  const btn=form.querySelector('button[type="submit"]');btn.disabled=true;
+  try{
+   const {error}=await db.rpc('fv81_admin_reply',{p_request_id:form.dataset.fv81CaseId,p_message:form.elements.reply?.value.trim()||'',p_status:form.elements.status.value});
+   if(error)throw error;
+   toast('Support case saved.');await fv8LoadRecoveryRequests();
+  }catch(err){toast('Could not update case: '+err.message);}
+  finally{btn.disabled=false;}
  }
 });

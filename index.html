@@ -62,31 +62,24 @@
            <div class="fx-hero-actions"><button class="fx-primary" data-store-nav="all">♧ &nbsp;Explore Games <span>→</span></button><button class="fx-dark-button" id="watch-trailer">▷ &nbsp;Watch Trailer</button></div>
          </div>
       </div>
-      <div class="fx-feature-layout" aria-label="Featured game showcase">
-        <button id="feature-previous" class="fx-slider-arrow fx-left" aria-label="Previous featured artwork">❮</button>
-        <div class="fx-feature-main">
-          <div id="fx-feature-stage" class="fx-feature-stage">
-            <div class="fx-feature-info"><p id="fx-feature-heading" class="fx-feature-heading">VOIDBORN</p><p id="fx-feature-subtitle">A Sci-Fi Open World Survival</p><button id="feature-action" type="button" class="fx-yellow">Play Now &nbsp;→</button></div>
+      <section class="fx-live-area" id="all-games" aria-labelledby="catalog-heading">
+        <div id="fx-empty-state" class="fx-empty-state" aria-live="polite">
+          <div class="fx-empty-content">
+            <span class="fx-stage-eyebrow"><span class="fx-live-dot"></span> THE UNIVERSE IS OPEN</span>
+            <h2>New worlds are on the way.</h2>
+            <p id="fx-empty-message">Games will appear here automatically after they're submitted and approved for FluxVerse.</p>
+            <button type="button" class="fx-outline-action" data-page="developer">Publish a game <span aria-hidden="true">→</span></button>
           </div>
-          <div id="fx-slide-dots" class="fx-slide-dots" aria-label="Select featured slide"></div>
         </div>
-        <div class="fx-thumbs" id="fx-thumbs" aria-label="Featured artwork choices"></div>
-        <button id="feature-next" class="fx-slider-arrow fx-right" aria-label="Next featured artwork">❯</button>
-      </div>
-      <div class="fx-quick-filters" aria-label="Browse games by popularity">
-        <button class="selected" data-quick="trending"><span>⌁</span> Trending</button>
-        <button data-quick="rated"><span>☆</span> Top Rated</button>
-        <button data-quick="played"><span>♧</span> Most Played</button>
-        <button data-quick="soon"><span>▣</span> Coming Soon</button>
-      </div>
-      <div class="fx-featured-rows">
-        <section class="fx-promo-section" id="deals"><div class="fx-row-title"><h2><span class="fx-yellow-symbol">◇</span> Deals</h2><button data-scroll="all-games">View All →</button></div><div id="deals-games" class="fx-promo-cards"></div></section>
-        <section class="fx-promo-section" id="free-weekends"><div class="fx-row-title"><h2><span class="fx-yellow-symbol">▣</span> Free Weekends</h2><button data-store-nav="free">View All →</button></div><div id="free-games" class="fx-promo-cards"></div></section>
-      </div>
-      <section class="fx-promo-section fx-new" id="new-releases"><div class="fx-row-title"><h2><span class="fx-yellow-symbol">★</span> New Releases</h2><button data-scroll="all-games">View All →</button></div><div id="featured-games" class="fx-promo-cards fx-new-cards"></div></section>
-      <p class="fx-preview-disclaimer">Storefront artwork, prices and free-weekend banners above are design concepts—not active offers. Playable and available games appear below.</p>
-      <section class="fx-real-catalog" id="all-games"><div class="fx-row-title"><h2><span class="fx-yellow-symbol">▣</span> All Games on FluxVerse</h2><span id="game-count">0 games</span></div><div id="games" class="store-game-grid"></div></section>
-      <div class="fx-footer-note"><button data-page="developer">Publish a game on FluxVerse →</button><button data-page="community">Join the Community →</button></div>
+        <div id="fx-live-list" class="fx-live-list hidden">
+          <div class="fx-list-heading">
+            <div><span class="fx-stage-eyebrow">EXPLORE FLUXVERSE</span><h2 id="fx-games-heading">Games on FluxVerse</h2><p id="fx-filter-description">Browse the latest approved releases.</p></div>
+            <span class="fx-game-total" id="game-count">0 games</span>
+          </div>
+          <div id="games" class="store-game-grid"></div>
+        </div>
+        <span class="fx-catalog-heading-placeholder" id="catalog-heading" hidden>Games on FluxVerse</span>
+      </section>
     </div>
   </div>
 </section>

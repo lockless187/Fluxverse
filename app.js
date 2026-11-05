@@ -19,7 +19,7 @@ function needLogin(){if(!user){openAuth("login");toast("Sign in to use this feat
 function openAuth(mode){setMode(mode);$("modal").classList.remove("hidden");}
 function closeAuth(){$("modal").classList.add("hidden");}
 function setMode(mode){authMode=mode;document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("chosen",b.dataset.mode===mode));$("signup-fields").classList.toggle("hidden",mode!=="signup");$("auth-submit").textContent=mode==="login"?"Sign in ↗":"Create account ↗";$("auth-message").textContent="";}
-function page(name){if(name==="store")loadGames();document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===`page-${name}`));document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===name));document.querySelectorAll(".side-link").forEach(b=>b.classList.toggle("selected",b.dataset.page===name));if(name==="library")loadLibrary();if(name==="wishlist")loadWishlist().then(renderWishlistPage);if(name==="community")loadPosts();if(name==="friends")loadFriends();if(name==="developer")loadDeveloperPortal();scrollTo({top:0,behavior:"smooth"});}
+function page(name){if(name==="store")loadGames();document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===`page-${name}`));document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===name));document.querySelectorAll(".side-link").forEach(b=>b.classList.toggle("selected",b.dataset.page===name));if(name==="library")loadLibrary();if(name==="wishlist")loadWishlist().then(renderWishlistPage);if(name==="community")loadPosts();if(name==="friends")loadFriends();if(name==="developer")loadDeveloperPortal();if(typeof fv7OnPage==='function')fv7OnPage(name);scrollTo({top:0,behavior:"smooth"});}
 function coverFor(g){const raw=g.image_url||g.cover_url||g.thumbnail_url||g.banner_url||"";return /^https?:\/\//i.test(String(raw))?String(raw):"";}
 function card(g){
  const name=String(g.title||'Untitled Game');
@@ -137,12 +137,12 @@ async function loadGames(){
  }catch(error){toast('Game catalog unavailable: '+(error?.message||'Please try again.'));}
  finally{fvCatalogBusy=false;}
 }
-async function updateUser(){if(!user){profile=null;wishlistIds.clear();libraryIds.clear();$("auth-open").classList.remove("hidden");$("user-chip").classList.add("hidden");renderGames();$("library-list").innerHTML='<div class="empty">Sign in to see your library.</div>';return;}let {data}=await db.from("profiles").select("*").eq("id",user.id).maybeSingle();profile=data||{username:user.email?.split("@")[0],display_name:"Player"};$("auth-open").classList.add("hidden");$("user-chip").classList.remove("hidden");$("user-label").textContent=profile.display_name||profile.username;await Promise.all([loadLibrary(),loadWishlist()]);loadFriends();if(document.getElementById("page-developer").classList.contains("active"))loadDeveloperPortal();}
+async function updateUser(){if(!user){profile=null;wishlistIds.clear();libraryIds.clear();$("auth-open").classList.remove("hidden");$("user-chip").classList.add("hidden");renderGames();$("library-list").innerHTML='<div class="empty">Sign in to see your library.</div>';fv7OnUserChanged();return;}let {data}=await db.from("profiles").select("*").eq("id",user.id).maybeSingle();profile=data||{username:user.email?.split("@")[0],display_name:"Player"};$("auth-open").classList.add("hidden");$("user-chip").classList.remove("hidden");$("user-label").textContent=profile.display_name||profile.username;await Promise.all([loadLibrary(),loadWishlist()]);loadFriends();fv7OnUserChanged();if(document.getElementById("page-developer").classList.contains("active"))loadDeveloperPortal();}
 async function renderWishlistPage(){if(!user){$("wishlist-list").innerHTML='<div class="empty">Sign in to see your wishlist.</div>';return;}const list=games.filter(g=>wishlistIds.has(String(g.id)));$("wishlist-list").innerHTML=list.length?list.map(card).join(''):'<div class="empty">No wishlisted games yet. Browse All Games and save one!</div>';}
 async function loadLibrary(){if(!user){libraryIds.clear();$("library-list").innerHTML='<div class="empty">Sign in to see your library.</div>';return;}let {data,error}=await db.from("library").select("game_id,games(*)").eq("user_id",user.id);if(error){$("library-list").textContent=error.message;return;}let rows=data||[];libraryIds.clear();rows.forEach(x=>libraryIds.add(String(x.game_id)));let list=rows.map(x=>x.games).filter(g=>g&&g.source_submission_id);$("library-list").innerHTML=list.length?list.map(card).join(""):'<div class="empty">Your library is waiting for its first game. Add a free game from the Store!</div>';renderGames();}
 async function loadWishlist(){if(!user){wishlistIds.clear();renderGames();return;}let {data,error}=await db.from("wishlist").select("game_id").eq("user_id",user.id);if(error){toast("Couldn't load wishlist: "+error.message);return;}wishlistIds.clear();(data||[]).forEach(x=>wishlistIds.add(String(x.game_id)));renderGames();}
-async function loadPosts(){if(!db){$("posts").innerHTML='<div class="empty">Connect Supabase to activate the community feed.</div>';return;}let {data,error}=await db.from("posts").select("id,content,created_at,profiles(username,display_name)").order("created_at",{ascending:false}).limit(50);if(error){$("posts").textContent=error.message;return;}$("posts").innerHTML=data.length?data.map(p=>`<article class="post"><b>${esc(p.profiles?.display_name||p.profiles?.username||"Player")} <small>@${esc(p.profiles?.username||"player")}</small></b><p>${esc(p.content)}</p></article>`).join(""):'<div class="empty">No posts yet. Start the conversation!</div>';}
-async function loadFriends(){if(!user)return;$("requests").innerHTML='<div class="empty">Loading requests…</div>';$("friend-list").innerHTML='<div class="empty">Loading friends…</div>';let {data,error}=await db.from("friend_requests").select("id,sender_id,receiver_id,status,sender:profiles!friend_requests_sender_id_fkey(username,display_name),receiver:profiles!friend_requests_receiver_id_fkey(username,display_name)").or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`).order("created_at",{ascending:false});if(error){$("requests").textContent=error.message;$("friend-list").textContent="Could not load friends.";return;}let pending=data.filter(x=>x.status==="pending"),accepted=data.filter(x=>x.status==="accepted");$("requests").innerHTML=pending.length?pending.map(r=>{let incoming=r.receiver_id===user.id,p=incoming?r.sender:r.receiver;return `<div class="person"><span class="avatar">${initials(p?.display_name||p?.username)}</span><div style="flex:1"><b>${esc(p?.display_name||p?.username||"Player")}</b><small>@${esc(p?.username||"player")}</small></div>${incoming?`<button class="small" data-accept="${r.id}">Accept</button>`:"Sent"}</div>`}).join(""):'<div class="empty">No pending requests.</div>';$("friend-list").innerHTML=accepted.length?accepted.map(r=>{let p=r.sender_id===user.id?r.receiver:r.sender;return `<div class="person"><span class="avatar">${initials(p?.display_name||p?.username)}</span><div><b>${esc(p?.display_name||p?.username||"Player")}</b><small>@${esc(p?.username||"player")}</small></div></div>`}).join(""):'<div class="empty">Your crew starts with a friend request.</div>';}
+async function loadPosts(){return fv7LoadPosts();}
+async function loadFriends(){return fv7LoadFriends();}
 
 async function loadDeveloperPortal(){
  const logged=!!user;$('developer-login').classList.toggle('hidden',logged);$('developer-apply').classList.add('hidden');$('developer-status').classList.add('hidden');$('developer-tools').classList.add('hidden');$('admin-tools').classList.add('hidden');
@@ -389,6 +389,7 @@ async function fvOpenGame(gameId,{fromUrl=false}={}){
  const img=coverFor(g),free=Number(g.price_cents)===0;
  $('fv-game-detail-content').innerHTML=`<div class="fv-detail-header">${img?`<div class="fv-detail-cover"><img src="${esc(img)}" alt="${esc(g.title)} cover"></div>`:'<div class="fv-detail-cover fv-detail-placeholder">✦</div>'}<div class="fv-detail-overview"><span class="fv-detail-eyebrow">PUBLISHED ON FLUXVERSE</span><h2 id="fv-detail-title">${esc(g.title)}</h2><div class="fv-detail-badges"><span>${esc(g.genre||'Game')}</span><span>${free?'Free to Play':'Paid listing'}</span></div><div class="fv-detail-price">${money(g.price_cents)}${!free?'<small>Checkout not enabled</small>':''}</div><div class="fv-detail-actions" id="fv-detail-actions">${fvPriceState(g)}</div><button type="button" class="fv-share" id="fv-copy-link">↗ Copy game link</button></div></div><div class="fv-detail-columns"><section><h3>About this game</h3><p id="fv-detail-description">${esc(g.description||'No description added yet.')}</p><div id="fv-gallery-wrapper"></div></section><section class="fv-specs"><h3>Game information</h3><p><b>Genre</b> ${esc(g.genre||'Game')}</p><p><b>Availability</b> ${free?'Free for registered players':'Listing only — purchases disabled'}</p><div id="fv-more-metadata"><p><b>Release information</b> Loading…</p></div></section></div>`;
  $('fv-game-modal').classList.remove('hidden');
+ fv7ReviewPanel(String(gameId));
  $('fv-game-modal').querySelector('.fv-game-dialog').focus();
  document.body.classList.add('fv-modal-open');
  if(!fromUrl&&(location.protocol==='https:'||location.protocol==='http:')){const u=new URL(window.location.href);u.searchParams.set('game',String(gameId));history.pushState({fvGame:String(gameId)},'',u.pathname+u.search+u.hash);}
@@ -430,6 +431,7 @@ async function fvPerformGameAction(id,action){
   if(error){toast(error.message);return;}
   libraryIds.add(gameId);toast('Free game added to Library!');
   await loadLibrary();
+  if(fvOpenGameId===gameId)fv7LoadGameReviews(gameId);
  }else if(action==='wish'){
   if(wishlistIds.has(gameId)){
    const {error}=await db.from('wishlist').delete().eq('user_id',user.id).eq('game_id',gameId);
@@ -463,7 +465,7 @@ document.addEventListener("click",async e=>{
  const storeNav=e.target.closest('[data-store-nav]');if(storeNav){fxStoreNavigate(storeNav.dataset.storeNav);document.getElementById('discover-menu')?.classList.add('hidden');return;}
  if(e.target.closest('#watch-trailer')){fvShowInfo('Game trailers','Trailers will become available here when approved developers add them to their game pages. Explore the catalog to see available releases.');return;}
  if(e.target.closest('#discover-toggle')){const menu=$('discover-menu');menu.classList.toggle('hidden');$('discover-toggle').setAttribute('aria-expanded',String(!menu.classList.contains('hidden')));return;}
- if(e.target.closest('#notifications-button')){page('friends');toast('Friend requests are in your Friends tab.');return;}
+ if(e.target.closest('#notifications-button')){if(needLogin())page('notifications');return;}
  if(e.target.closest('#more-genres')){fxExpandedGenres=!fxExpandedGenres;renderGenres();return;}
  if(e.target.closest('#genre-toggle')){const genres=$('genres'),opening=genres.classList.contains('collapsed');genres.classList.toggle('collapsed',!opening);$('genre-toggle').setAttribute('aria-expanded',String(opening));return;}
  const genrePick=e.target.closest('[data-genre]');if(genrePick){fvSetGenre(genrePick.dataset.genre);return;}
@@ -496,8 +498,8 @@ $("auth-form").addEventListener("submit",async e=>{e.preventDefault();if(!db){to
 $('search').addEventListener('input',e=>{fxHomeSelected=false;fxBrowseMode='all';activeGenre='All';renderGenres();renderAll(e.target.value);if(!$('page-store').classList.contains('active'))page('store');});
 $('fv-sort').addEventListener('change',()=>renderGames());
 $("search").addEventListener("keydown",e=>{if(e.key==='Enter'){e.preventDefault();page('store');$('all-games').scrollIntoView({behavior:'smooth'});}});
-$("post-form").addEventListener("submit",async e=>{e.preventDefault();if(!needLogin())return;let content=$("post-text").value.trim();if(!content)return;let {error}=await db.from("posts").insert({user_id:user.id,content});if(error)toast(error.message);else{$("post-text").value="";toast("Your post is live!");loadPosts();}});
-$("friend-form").addEventListener("submit",async e=>{e.preventDefault();if(!needLogin())return;let name=$("friend-name").value.trim().replace(/^@/,"");let {data,error}=await db.from("profiles").select("id,username,display_name").ilike("username",name).limit(5);if(error){$("friend-results").textContent=error.message;return;}let found=(data||[]).filter(p=>p.id!==user.id);$("friend-results").innerHTML=found.length?found.map(p=>`<div class="person"><span class="avatar">${initials(p.display_name)}</span><div style="flex:1"><b>${esc(p.display_name)}</b><small>@${esc(p.username)}</small></div><button class="small" data-send="${p.id}">Add friend</button></div>`).join(""):'<div class="empty">No player found with that exact username.</div>';});
+$("post-form").addEventListener("submit",async e=>{e.preventDefault();await fv7CreatePost();});
+$("friend-form").addEventListener("submit",async e=>{e.preventDefault();await fv7SearchPlayers();});
 
 $("developer-application-form").addEventListener("submit",async e=>{e.preventDefault();if(!needLogin())return;let payload={user_id:user.id,studio_name:$("dev-studio").value.trim(),website:$("dev-website").value.trim()||null,about:$("dev-about").value.trim()};let {error}=await db.from("developer_applications").insert(payload);if(error){toast(error.message);return;}toast("Developer application submitted!");$("developer-application-form").reset();loadDeveloperPortal();});
 $("developer-game-form").addEventListener("submit",async e=>{
@@ -574,3 +576,317 @@ setInterval(()=>{if(!document.hidden&&$('page-store').classList.contains('active
 
 // Closing dialogs with a click outside or Escape does not change the active Store tab.
 window.addEventListener('popstate',()=>{const id=new URLSearchParams(location.search).get('game');if(id&&games.some(g=>String(g.id)===id))fvOpenGame(id,{fromUrl:true});else if(fvOpenGameId)fvCloseGame({fromUrl:true});});
+
+/* ---- FluxVerse v7 Social, Profiles & Community Suite ----
+   Additive to Store v6. Supabase SQL migration 01_SOCIAL_UPGRADE.sql required. */
+const fv7AvatarIcons=['🎮','🚀','⚡','🌌','👾','🐉','🏆','🛡️'];
+const fv7AccentColors=['#00c9ff','#98ff00','#ffe700','#ff9d00','#ff579d','#b699ff'];
+let fv7Avatar='🎮',fv7Accent='#00c9ff',fv7OpenChat=null,fv7ChatName='',fv7ReportContext=null,fv7OpenPublicUser=null;
+let fv7FriendsSnapshot={relationships:[],blocked:[]},fv7CommentsOpen=new Set(),fv7BusyCalls=new Set(),fv7ActiveReviewGame=null;
+const fv7Date=(v)=>{try{return new Date(v).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'});}catch{return 'Recently';}};
+const fv7Color=v=>fv7AccentColors.includes(v)?v:fv7AccentColors[0];
+const fv7Icon=v=>fv7AvatarIcons.includes(v)?v:fv7AvatarIcons[0];
+const fv7Uuid=v=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v));
+const fv7SafeId=v=>String(v||'').slice(0,100);
+function fv7HtmlPerson(p){return `<span class="fv7-avatar" aria-hidden="true" style="border-color:${fv7Color(p?.accent_color)}">${fv7Icon(p?.avatar_icon)}</span>`;}
+function fv7Text(v){return esc(v??'');}
+async function fv7Rpc(name,args={}){
+ if(!db)throw Error('Supabase is not connected.');
+ const {data,error}=await db.rpc(name,args);
+ if(error)throw Error(error.message||'Could not finish this action.');
+ return data;
+}
+function fv7Problem(e){toast(e?.message||String(e)||'Something went wrong.');}
+async function fv7Guard(key,fn){if(fv7BusyCalls.has(key))return;fv7BusyCalls.add(key);try{await fn();}catch(err){fv7Problem(err);}finally{fv7BusyCalls.delete(key);}}
+function fv7Require(){return needLogin();}
+function fv7OnPage(name){
+ if(name==='profile')fv7ShowProfileSettings();
+ if(name==='notifications')fv7LoadNotifications();
+ if(name==='help')fv7LoadFeedback();
+}
+function fv7OnUserChanged(){
+ const label=$('fv7-profile-title');if(label)label.textContent=profile?.display_name||profile?.username||'Your profile';
+ const chip=$('fv7-profile-avatar');if(chip){chip.textContent=fv7Icon(profile?.avatar_icon);chip.style.borderColor=fv7Color(profile?.accent_color);}
+ if($('user-chip')&&!$('user-chip').classList.contains('hidden'))$('user-chip').querySelector('.fx-avatar').textContent=fv7Icon(profile?.avatar_icon);
+ fv7UpdateUnread();
+ if($('page-profile')?.classList.contains('active'))fv7ShowProfileSettings();
+ if($('page-notifications')?.classList.contains('active'))fv7LoadNotifications();
+ if(!user){fv7OpenChat=null;fv7FriendsSnapshot={relationships:[],blocked:[]};if($('page-friends')?.classList.contains('active'))fv7LoadFriends();}
+}
+function fv7ShowProfileSettings(){
+ $('fv7-profile-guest').classList.toggle('hidden',Boolean(user));
+ $('fv7-profile-member').classList.toggle('hidden',!user);
+ if(!user)return;
+ fv7Avatar=fv7Icon(profile?.avatar_icon);fv7Accent=fv7Color(profile?.accent_color);
+ $('fv7-username').value=profile?.username||'';
+ $('fv7-display').value=profile?.display_name||profile?.username||'';
+ $('fv7-bio').value=profile?.bio||'';
+ $('fv7-public').checked=profile?.is_public!==false;
+ $('fv7-notify').checked=profile?.notification_opt_in!==false;
+ $('fv7-profile-title').textContent=profile?.display_name||profile?.username||'Player';
+ $('fv7-profile-handle').textContent='@'+(profile?.username||'player');
+ $('fv7-profile-bio-preview').textContent=profile?.bio||'Tell other players a little about yourself.';
+ $('fv7-profile-avatar').textContent=fv7Avatar;$('fv7-profile-avatar').style.borderColor=fv7Accent;
+ fv7PaintAvatarChoices();
+}
+function fv7PaintAvatarChoices(){
+ $('fv7-avatar-options').innerHTML=fv7AvatarIcons.map(x=>`<button type="button" aria-pressed="${String(x===fv7Avatar)}" data-fv7-avatar="${x}" title="${x} avatar">${x}</button>`).join('');
+ $('fv7-color-options').innerHTML=fv7AccentColors.map(x=>`<button type="button" aria-pressed="${String(x===fv7Accent)}" data-fv7-accent="${x}" style="background:${x}" title="Accent ${x}"></button>`).join('');
+ $('fv7-profile-avatar').textContent=fv7Avatar;$('fv7-profile-avatar').style.borderColor=fv7Accent;
+}
+async function fv7PublicProfile(id){
+ if(!fv7Uuid(id)){toast('Profile unavailable.');return;}
+ fv7OpenPublicUser=id;const modal=$('fv7-public-modal');modal.classList.remove('hidden');
+ $('fv7-public-content').innerHTML='<p>Loading player profile…</p>';
+ modal.querySelector('.fv7-modal-content').focus();
+ try{
+  const p=await fv7Rpc('fv_public_player',{p_user:id});if(fv7OpenPublicUser!==id)return;
+  if(!p){$('fv7-public-content').innerHTML='<h2>Profile unavailable</h2><p>This profile may be private or blocked.</p>';return;}
+  const mine=user?.id===id;
+  const relationship=fv7FriendsSnapshot.relationships.find(r=>String(r.user_id)===id);
+  const actions=mine?`<button type="button" class="primary" data-page="profile" data-fv7-close-public>Open account settings</button>`:
+   (user?`${relationship?(relationship.status==='accepted'?`<button type="button" class="outline" data-fv7-chat="${esc(id)}">Message</button>`:`<span class="muted">Friend request ${relationship.incoming?'received':'sent'}</span>`):`<button type="button" class="primary" data-fv7-friend="request" data-target="${esc(id)}">Send friend request</button>`}
+   <button type="button" class="outline" data-fv7-friend="block" data-target="${esc(id)}">Block player</button><button type="button" class="outline" data-fv7-report="profile" data-target="${esc(id)}">Report profile</button>`:'<button class="primary" type="button" id="fv7-public-signin">Sign in to connect</button>');
+  $('fv7-public-content').innerHTML=`<div class="fv7-profile-public"><div class="fv7-public-identity">${fv7HtmlPerson({...p,avatar_icon:p.avatar_icon})}<div><span class="fv7-stage-tag">FLUXVERSE PLAYER</span><h2 id="fv7-public-title">${esc(p.display_name||p.username||'Player')}</h2><p>@${esc(p.username||'player')}</p></div></div><p>${p.private?'This player has a private profile.':esc(p.bio||'This player has not added a bio yet.')}</p><div class="fv7-actions">${actions}</div></div>`;
+ }catch(err){$('fv7-public-content').innerHTML=`<h2>Can't load profile</h2><p>${esc(err.message)}</p>`;}
+}
+function fv7ClosePublic(){fv7OpenPublicUser=null;$('fv7-public-modal').classList.add('hidden');}
+function fv7CloseReport(){fv7ReportContext=null;$('fv7-report-modal').classList.add('hidden');$('fv7-report-reason').value='';}
+function fv7OpenReport(kind,target){if(!fv7Require())return;fv7ReportContext={kind,target};$('fv7-report-modal').classList.remove('hidden');$('fv7-report-reason').focus();}
+async function fv7SearchPlayers(){
+ if(!fv7Require())return;
+ const q=$('friend-name').value.trim().replace(/^@/,'').toLowerCase();
+ if(!/^[a-z0-9_]{2,24}$/.test(q)){$('friend-results').innerHTML='<div class="empty">Enter at least 2 username characters (letters, numbers, underscore).</div>';return;}
+ $('friend-results').innerHTML='<div class="empty">Searching…</div>';
+ try{
+  const matches=await fv7Rpc('fv_search_players',{p_prefix:q});
+  $('friend-results').innerHTML=(matches||[]).length?(matches||[]).map(p=>fv7PersonRow(p,'search')).join(''):'<div class="empty">No public players found with that username prefix.</div>';
+ }catch(err){$('friend-results').innerHTML='<div class="empty">'+esc(err.message)+'</div>';}
+}
+function fv7PersonRow(p,kind='friend'){
+ const id=String(p.user_id||'');if(!fv7Uuid(id))return '';
+ const buttons=kind==='search'?`<button type="button" class="fv7-good" data-fv7-friend="request" data-target="${esc(id)}">Add friend</button>`:
+ kind==='incoming'?`<button type="button" class="fv7-good" data-fv7-friend="accept" data-target="${esc(id)}">Accept</button><button type="button" data-fv7-friend="decline" data-target="${esc(id)}">Decline</button>`:
+ kind==='outgoing'?`<button type="button" data-fv7-friend="cancel" data-target="${esc(id)}">Cancel</button>`:
+ kind==='blocked'?`<button type="button" data-fv7-friend="unblock" data-target="${esc(id)}">Unblock</button>`:
+ `<button type="button" class="fv7-good" data-fv7-chat="${esc(id)}">Message</button><button type="button" data-fv7-friend="remove" data-target="${esc(id)}">Remove</button><button type="button" class="fv7-danger" data-fv7-friend="block" data-target="${esc(id)}">Block</button>`;
+ return `<div class="fv7-person">${fv7HtmlPerson(p)}<div class="fv7-person-info"><button class="fv7-username" type="button" data-fv7-user="${esc(id)}">${esc(p.display_name||p.username||'Player')}</button><small>@${esc(p.username||'player')}</small></div><div class="fv7-person-actions">${buttons}</div></div>`;
+}
+async function fv7LoadFriends(){
+ if(!user){$('requests').innerHTML='<div class="empty">Sign in to manage your friends.</div>';$('friend-list').innerHTML='<div class="empty">Sign in to see your friends.</div>';$('fv7-blocked-list').innerHTML='<div class="empty">Sign in to manage blocked players.</div>';return;}
+ $('requests').innerHTML='<div class="empty">Loading friend requests…</div>';
+ $('friend-list').innerHTML='<div class="empty">Loading friends…</div>';
+ try{
+  const result=await fv7Rpc('fv_social_friends');fv7FriendsSnapshot={relationships:result?.relationships||[],blocked:result?.blocked||[]};
+  const incoming=fv7FriendsSnapshot.relationships.filter(r=>r.status==='pending'&&r.incoming),outgoing=fv7FriendsSnapshot.relationships.filter(r=>r.status==='pending'&&!r.incoming),accepted=fv7FriendsSnapshot.relationships.filter(r=>r.status==='accepted');
+  $('requests').innerHTML=(incoming.length+outgoing.length)?`<h4>Incoming (${incoming.length})</h4>${incoming.map(p=>fv7PersonRow(p,'incoming')).join('')||'<p class="muted">No incoming requests.</p>'}<h4>Sent (${outgoing.length})</h4>${outgoing.map(p=>fv7PersonRow(p,'outgoing')).join('')||'<p class="muted">No sent requests.</p>'}`:'<div class="empty">No pending friend requests.</div>';
+  $('friend-list').innerHTML=accepted.length?accepted.map(p=>fv7PersonRow(p,'friend')).join(''):'<div class="empty">No friends yet. Search for players above to send a request.</div>';
+  $('fv7-blocked-list').innerHTML=fv7FriendsSnapshot.blocked.length?fv7FriendsSnapshot.blocked.map(p=>fv7PersonRow(p,'blocked')).join(''):'<div class="empty">You have not blocked any players.</div>';
+  if(fv7OpenChat&&!accepted.some(r=>r.user_id===fv7OpenChat)){fv7OpenChat=null;$('fv7-chat-history').innerHTML='<div class="empty">Choose a friend to chat.</div>';$('fv7-chat-input').disabled=true;$('fv7-chat-send').disabled=true;}
+ }catch(err){$('requests').innerHTML=`<div class="empty">${esc(err.message)}. Run the v7 SQL migration if you haven't yet.</div>`;$('friend-list').innerHTML='<div class="empty">Friend list unavailable.</div>';}
+}
+async function fv7FriendAction(action,target){
+ if(!fv7Require()||!fv7Uuid(target))return;
+ if(['remove','block'].includes(action)&&!confirm(action==='block'?'Block this player? This also removes your friendship.':'Remove this player from your friends?'))return;
+ await fv7Guard('friend-'+target,async()=>{
+  const result=await fv7Rpc('fv_friend_action',{p_target:target,p_action:action});toast(result||'Friend list updated.');
+  await fv7LoadFriends();fv7UpdateUnread();
+  if(fv7OpenPublicUser===target)fv7PublicProfile(target);
+ });
+}
+async function fv7OpenConversation(id){
+ if(!fv7Require()||!fv7Uuid(id))return;
+ const member=fv7FriendsSnapshot.relationships.find(r=>r.user_id===id&&r.status==='accepted');
+ if(!member){toast('Private messages are for accepted friends only.');return;}
+ fv7OpenChat=id;fv7ChatName=member.display_name||member.username||'Friend';
+ $('fv7-chat-title').textContent=fv7ChatName;$('fv7-chat-input').disabled=false;$('fv7-chat-send').disabled=false;
+ fv7ClosePublic();page('friends');await fv7LoadConversation();
+}
+async function fv7LoadConversation({quiet=false}={}){
+ if(!user||!fv7OpenChat)return;
+ try{
+  const id=fv7OpenChat,data=await fv7Rpc('fv_social_message_history',{p_target:id});
+  if(id!==fv7OpenChat)return;
+  const history=(data||[]).slice().sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const box=$('fv7-chat-history');const atBottom=box.scrollTop+box.clientHeight>=box.scrollHeight-55;
+  const markup=history.length?history.map(x=>`<div class="fv7-bubble ${x.mine?'mine':''}"><p>${esc(x.body)}</p><small>${fv7Date(x.created_at)} ${x.mine?'· You':''}</small></div><div class="fv7-chat-message-actions"><button type="button" class="fv7-mini" data-fv7-report="message" data-target="${esc(x.id)}">Report</button></div>`).join(''):'<div class="empty">No messages yet. Say hello!</div>';
+  if(box.innerHTML!==markup){box.innerHTML=markup;if(atBottom||!quiet)box.scrollTop=box.scrollHeight;}
+  fv7UpdateUnread();
+ }catch(err){if(!quiet)$('fv7-chat-history').textContent=err.message;}
+}
+async function fv7SendMessage(){
+ if(!fv7Require()||!fv7OpenChat)return;
+ const body=$('fv7-chat-input').value.trim();if(!body)return;
+ await fv7Guard('message-send',async()=>{await fv7Rpc('fv_social_send_message',{p_target:fv7OpenChat,p_body:body});$('fv7-chat-input').value='';await fv7LoadConversation();});
+}
+async function fv7LoadPosts(){
+ if(!db){$('posts').innerHTML='<div class="empty">Connect Supabase to enable Community.</div>';return;}
+ $('posts').innerHTML='<div class="empty">Loading community posts…</div>';
+ try{
+  const posts=await fv7Rpc('fv_social_feed');
+  const list=Array.isArray(posts)?posts:[];
+  $('posts').innerHTML=list.length?list.map(fv7PostCard).join(''):'<div class="empty">No community posts yet. Start the conversation!</div>';
+  // Preserve open reply threads if the feed is refreshed.
+  for(const id of [...fv7CommentsOpen])if($('fv7-comments-'+id))fv7LoadComments(id);
+  if(user){try{const {data}=await db.rpc('is_fluxverse_admin');isFluxAdmin=data===true;$('fv7-admin-reports').classList.toggle('hidden',!isFluxAdmin);if(isFluxAdmin)fv7LoadReports();}catch{}}
+  else $('fv7-admin-reports').classList.add('hidden');
+ }catch(err){$('posts').innerHTML=`<div class="empty">${esc(err.message)}. Run the v7 social migration in Supabase first.</div>`;}
+}
+function fv7PostCard(p){
+ const id=fv7SafeId(p.id);const mine=user?.id===p.user_id;
+ const author={avatar_icon:p.avatar_icon,accent_color:p.accent_color};
+ return `<article class="fv7-post" data-fv7-post-id="${esc(id)}"><div class="fv7-user-line">${fv7HtmlPerson(author)}<div><button class="fv7-user-name" type="button" data-fv7-user="${esc(p.user_id)}">${esc(p.display_name||p.username||'Player')}</button><div class="fv7-user-meta"><span>@${esc(p.username||'player')}</span><span>•</span><time>${fv7Date(p.created_at)}</time></div></div></div><div class="fv7-post-content">${esc(p.content)}</div><div class="fv7-actions"><button type="button" data-fv7-like="${esc(id)}" aria-pressed="${Boolean(p.liked)}">${p.liked?'♥':'♡'} Like (${Number(p.likes)||0})</button><button type="button" data-fv7-comments="${esc(id)}">▤ Comments (${Number(p.comments)||0})</button><button type="button" data-fv7-bookmark="${esc(id)}" aria-pressed="${Boolean(p.saved)}">${p.saved?'★ Saved':'☆ Save'}</button>${mine?`<button type="button" data-fv7-delete-post="${esc(id)}">Delete</button>`:''}<button type="button" data-fv7-report="post" data-target="${esc(id)}">Report</button></div><div class="fv7-comment-area ${fv7CommentsOpen.has(id)?'':'hidden'}" id="fv7-comments-${esc(id)}"><div class="fv7-comment-list">Loading comments…</div><form class="fv7-comment-form" data-post-id="${esc(id)}"><textarea required maxlength="1000" rows="2" placeholder="Write a respectful reply…" aria-label="Write a comment"></textarea><button type="submit" class="primary">Reply</button></form></div></article>`;
+}
+async function fv7CreatePost(){
+ if(!fv7Require())return;const body=$('post-text').value.trim();if(!body)return;
+ await fv7Guard('create-post',async()=>{await fv7Rpc('fv_social_create_post',{p_body:body});$('post-text').value='';toast('Your post was published.');await fv7LoadPosts();});
+}
+async function fv7TogglePost(postId,kind){if(!fv7Require())return;await fv7Guard('post-'+postId+'-'+kind,async()=>{await fv7Rpc('fv_social_toggle_post',{p_post_id:postId,p_kind:kind});await fv7LoadPosts();});}
+async function fv7LoadComments(postId){
+ const box=$('fv7-comments-'+postId);if(!box)return;
+ const list=box.querySelector('.fv7-comment-list');if(!list)return;
+ try{
+  const comments=await fv7Rpc('fv_social_comments',{p_post_id:postId});
+  list.innerHTML=(comments||[]).length?(comments||[]).map(c=>`<div class="fv7-comment">${fv7HtmlPerson(c)}<div class="fv7-comment-body"><button type="button" class="fv7-user-name" data-fv7-user="${esc(c.user_id)}">${esc(c.display_name||c.username||'Player')}</button><small> · ${fv7Date(c.created_at)}</small><p>${esc(c.body)}</p><div class="fv7-actions">${(user?.id===c.user_id||isFluxAdmin)?`<button type="button" data-fv7-delete-comment="${esc(c.id)}">Delete</button>`:''}<button type="button" data-fv7-report="comment" data-target="${esc(c.id)}">Report</button></div></div></div>`).join(''):'<p class="muted">No comments yet. Be the first!</p>';
+ }catch(err){list.textContent=err.message;}
+}
+async function fv7AddComment(form){
+ if(!fv7Require())return;
+ const id=form.dataset.postId,area=form.querySelector('textarea'),body=area.value.trim();if(!body)return;
+ await fv7Guard('comment-'+id,async()=>{await fv7Rpc('fv_social_add_comment',{p_post_id:id,p_body:body});area.value='';fv7CommentsOpen.add(id);await fv7LoadPosts();toast('Reply posted.');});
+}
+async function fv7UpdateUnread(){
+ if(!user){$('fv7-notification-count').classList.add('hidden');return;}
+ try{const count=Number(await fv7Rpc('fv_social_notification_count'))||0;
+ $('fv7-notification-count').textContent=count>99?'99+':String(count);
+ $('fv7-notification-count').classList.toggle('hidden',count<=0);
+ }catch{$('fv7-notification-count').classList.add('hidden');}
+}
+async function fv7LoadNotifications(){
+ if(!user){$('fv7-notifications-list').innerHTML='<div class="empty">Sign in to view your notifications.</div>';return;}
+ $('fv7-notifications-list').innerHTML='<div class="empty">Loading notifications…</div>';
+ try{
+  const data=await fv7Rpc('fv_social_notifications_list');
+  $('fv7-notifications-list').innerHTML=(data||[]).length?(data||[]).map(n=>`<div class="fv7-notice ${n.read?'':'unread'}"><span class="fv7-avatar" aria-hidden="true">${({friend_request:'👋',friend_accepted:'🎉',comment:'💬',like:'♥',message:'✉️'})[n.kind]||'✦'}</span><div class="fv7-notice-copy"><b>${esc(n.title)}</b><small>${esc(n.actor_name||'FluxVerse')} · ${fv7Date(n.created_at)}</small>${n.message?`<small>${esc(n.message)}</small>`:''}</div><div class="fv7-person-actions">${n.actor_id&&fv7Uuid(n.actor_id)?`<button type="button" data-fv7-user="${esc(n.actor_id)}">View</button>`:''}${!n.read?`<button type="button" data-fv7-mark="${esc(n.id)}">Mark read</button>`:''}</div></div>`).join(''):'<div class="empty">No notifications yet. New activity will appear here.</div>';
+  fv7UpdateUnread();
+ }catch(err){$('fv7-notifications-list').innerHTML='<div class="empty">'+esc(err.message)+'</div>';}
+}
+function fv7ReviewPanel(gameId){
+ if(!fv7Uuid(gameId))return;
+ fv7ActiveReviewGame=gameId;
+ const root=$('fv-game-detail-content');if(!root)return;
+ root.querySelector('#fv7-game-reviews')?.remove();
+ const section=document.createElement('section');section.className='fv7-review-panel';section.id='fv7-game-reviews';section.innerHTML='<h3>Player reviews</h3><p class="muted">Loading verified player reviews…</p>';
+ root.appendChild(section);fv7LoadGameReviews(gameId);
+}
+async function fv7LoadGameReviews(gameId){
+ const box=$('fv7-game-reviews');if(!box||fv7ActiveReviewGame!==gameId)return;
+ try{
+  const data=await fv7Rpc('fv_social_game_reviews',{p_game_id:gameId});
+  if(fv7ActiveReviewGame!==gameId||!$('fv7-game-reviews'))return;
+  const owned=user&&libraryIds.has(gameId);const current=(data?.reviews||[]).find(r=>r.own);
+  const summary=`<div class="fv7-row"><h3>Player reviews</h3><strong>${Number(data?.count)||0} review${Number(data?.count)===1?'':'s'} · ${Number(data?.average||0).toFixed(1)} / 5</strong></div>`;
+  const form=owned?`<form id="fv7-review-form" class="fv7-review-form"><label>Rate this game <select id="fv7-review-rating"><option value="5">★★★★★ · Excellent</option><option value="4">★★★★ · Great</option><option value="3">★★★ · Good</option><option value="2">★★ · Fair</option><option value="1">★ · Poor</option></select></label><textarea id="fv7-review-body" rows="3" maxlength="1500" placeholder="What did you think of this game?"></textarea><div><button class="primary" type="submit">${current?'Update review':'Publish review'}</button> ${current?'<button type="button" class="fv7-mini" id="fv7-remove-review">Remove my review</button>':''}</div></form>`:'<p class="muted">Claim this free game in your Library to leave a review. Paid purchases are not enabled.</p>';
+  const list=(data?.reviews||[]).length?(data.reviews||[]).map(r=>`<article class="fv7-review-entry"><div><b>${esc(r.display_name||r.username||'Player')}</b> · ${'★'.repeat(Math.max(0,Math.min(5,Number(r.rating)||0)))} <small>${fv7Date(r.updated_at)}</small></div><p>${esc(r.body||'')}</p><button type="button" class="fv7-mini" data-fv7-report="review" data-target="${esc(gameId+':'+r.author_id)}">Report</button></article>`).join(''):'<p class="muted">No reviews yet. Be the first after you play.</p>';
+  box.innerHTML=summary+form+list;
+  if(current&&$('fv7-review-rating')){$('fv7-review-rating').value=String(current.rating);$('fv7-review-body').value=current.body||'';}
+ }catch(err){box.innerHTML='<h3>Player reviews</h3><p class="muted">'+esc(err.message)+' (If this is a new install, run v7 SQL.)</p>';}
+}
+async function fv7SaveReview(){
+ if(!fv7Require()||!fv7ActiveReviewGame)return;
+ const gameId=fv7ActiveReviewGame,rating=Number($('fv7-review-rating').value),body=$('fv7-review-body').value.trim();
+ await fv7Guard('review-'+gameId,async()=>{await fv7Rpc('fv_social_submit_review',{p_game_id:gameId,p_rating:rating,p_body:body});toast('Review saved!');await fv7LoadGameReviews(gameId);});
+}
+async function fv7LoadReports(){
+ if(!user||!isFluxAdmin)return;
+ try{
+  const rows=await fv7Rpc('fv_social_admin_reports');
+  $('fv7-reports-list').innerHTML=(rows||[]).length?(rows||[]).map(r=>`<div class="fv7-report-card"><b>${esc(r.target_kind)} · ${esc(r.status)}</b><p>${esc(r.reason)}</p><small>Target: ${esc(r.target_id)} · ${fv7Date(r.created_at)}</small><div class="fv7-actions"><button data-fv7-review-report="reviewed" data-target="${esc(r.id)}" type="button">Mark reviewed</button><button data-fv7-review-report="dismissed" data-target="${esc(r.id)}" type="button">Dismiss</button></div></div>`).join(''):'<p class="muted">No submitted reports.</p>';
+ }catch(err){$('fv7-reports-list').textContent=err.message;}
+}
+
+async function fv7LoadFeedback(){
+ if(!user){$('fv7-admin-feedback').classList.add('hidden');return;}
+ try{
+  const {data,error}=await db.rpc('is_fluxverse_admin');
+  if(error||data!==true){$('fv7-admin-feedback').classList.add('hidden');return;}
+  $('fv7-admin-feedback').classList.remove('hidden');
+  const rows=await fv7Rpc('fv_social_admin_feedback');
+  $('fv7-feedback-list').innerHTML=(rows||[]).length?(rows||[]).map(r=>`<div class="fv7-report-card"><b>${esc(r.category)} · ${esc(r.status)}</b><p>${esc(r.body)}</p><small>@${esc(r.username||'Player')} · ${fv7Date(r.created_at)}</small><div class="fv7-actions">${r.status==='open'?`<button data-fv7-feedback-reviewed="${esc(r.id)}" type="button">Mark reviewed</button>`:''}</div></div>`).join(''):'<p class="muted">No feedback submitted yet.</p>';
+ }catch(err){$('fv7-feedback-list').textContent=err.message;}
+}
+
+// ---------- Independent event handlers for added v7 controls ----------
+document.addEventListener('click',e=>{
+ const target=e.target;
+ const avatar=target.closest('[data-fv7-avatar]');if(avatar){fv7Avatar=avatar.dataset.fv7Avatar;fv7PaintAvatarChoices();return;}
+ const color=target.closest('[data-fv7-accent]');if(color){fv7Accent=color.dataset.fv7Accent;fv7PaintAvatarChoices();return;}
+ const userBtn=target.closest('[data-fv7-user]');if(userBtn){fv7PublicProfile(userBtn.dataset.fv7User);return;}
+ const friend=target.closest('[data-fv7-friend]');if(friend){fv7FriendAction(friend.dataset.fv7Friend,friend.dataset.target);return;}
+ const chat=target.closest('[data-fv7-chat]');if(chat){fv7OpenConversation(chat.dataset.fv7Chat);return;}
+ const like=target.closest('[data-fv7-like]');if(like){fv7TogglePost(like.dataset.fv7Like,'like');return;}
+ const save=target.closest('[data-fv7-bookmark]');if(save){fv7TogglePost(save.dataset.fv7Bookmark,'bookmark');return;}
+ const comments=target.closest('[data-fv7-comments]');if(comments){const id=comments.dataset.fv7Comments;if(fv7CommentsOpen.has(id))fv7CommentsOpen.delete(id);else fv7CommentsOpen.add(id);const box=$('fv7-comments-'+id);if(box){box.classList.toggle('hidden',!fv7CommentsOpen.has(id));if(fv7CommentsOpen.has(id))fv7LoadComments(id);}return;}
+ const delPost=target.closest('[data-fv7-delete-post]');if(delPost){if(confirm('Delete your post and all its replies?'))fv7Guard('delete-post',async()=>{await fv7Rpc('fv_social_delete_post',{p_post_id:delPost.dataset.fv7DeletePost});fv7CommentsOpen.delete(delPost.dataset.fv7DeletePost);toast('Post deleted.');await fv7LoadPosts();});return;}
+ const delComment=target.closest('[data-fv7-delete-comment]');if(delComment){if(confirm('Delete this reply?'))fv7Guard('delete-comment',async()=>{await fv7Rpc('fv_social_delete_comment',{p_id:delComment.dataset.fv7DeleteComment});toast('Reply deleted.');await fv7LoadPosts();});return;}
+ const report=target.closest('[data-fv7-report]');if(report){fv7OpenReport(report.dataset.fv7Report,report.dataset.target);return;}
+ const mark=target.closest('[data-fv7-mark]');if(mark){fv7Guard('notification',async()=>{await fv7Rpc('fv_social_mark_notifications',{p_id:mark.dataset.fv7Mark});await fv7LoadNotifications();});return;}
+ const reportReview=target.closest('[data-fv7-review-report]');if(reportReview){fv7Guard('report-moderation',async()=>{await fv7Rpc('fv_social_admin_review_report',{p_id:reportReview.dataset.target,p_status:reportReview.dataset.fv7ReviewReport});await fv7LoadReports();toast('Report updated.');});return;}
+ if(target.closest('[data-fv7-close-public]')){fv7ClosePublic();return;}
+ if(target.closest('[data-fv7-close-report]')){fv7CloseReport();return;}
+ if(target.closest('#fv7-public-signin')||target.closest('#fv7-profile-login')){fv7ClosePublic();openAuth('login');return;}
+ if(target.closest('#fv7-refresh-friends')){fv7LoadFriends();return;}
+ if(target.closest('#fv7-feed-refresh')){fv7LoadPosts();return;}
+ if(target.closest('#fv7-refresh-reports')){fv7LoadReports();return;}
+ if(target.closest('#fv7-refresh-feedback')){fv7LoadFeedback();return;}
+ const reviewed=target.closest('[data-fv7-feedback-reviewed]');if(reviewed){fv7Guard('feedback-review',async()=>{await fv7Rpc('fv_social_admin_mark_feedback',{p_id:reviewed.dataset.fv7FeedbackReviewed});await fv7LoadFeedback();toast('Feedback marked reviewed.');});return;}
+ if(target.closest('#fv7-notifications-read')){fv7Guard('notifications-all',async()=>{await fv7Rpc('fv_social_mark_notifications',{});await fv7LoadNotifications();toast('Notifications marked as read.');});return;}
+ if(target.closest('#fv7-share-profile')){const url=new URL(location.href);url.searchParams.delete('game');url.searchParams.set('player',user?.id||'');navigator.clipboard?.writeText(url.href).then(()=>toast('Profile link copied!')).catch(()=>fvShowInfo('Profile link',url.href));return;}
+ if(target.closest('#fv7-send-reset')){if(!user?.email){toast('Please sign in to use password reset.');return;}fv7Guard('reset-password',async()=>{const {error}=await db.auth.resetPasswordForEmail(user.email,{redirectTo:location.origin+location.pathname});if(error)throw error;toast('Password reset email requested. Check your inbox.');});return;}
+ if(target.closest('#fv7-remove-review')){if(fv7ActiveReviewGame&&confirm('Remove your review?'))fv7Guard('remove-review',async()=>{await fv7Rpc('fv_social_remove_review',{p_game_id:fv7ActiveReviewGame});toast('Review removed.');await fv7LoadGameReviews(fv7ActiveReviewGame);});return;}
+});
+document.addEventListener('submit',e=>{
+ const form=e.target;
+ if(form.matches('.fv7-comment-form')){e.preventDefault();fv7AddComment(form);return;}
+ if(form.id==='fv7-chat-form'){e.preventDefault();fv7SendMessage();return;}
+ if(form.id==='fv7-profile-form'){
+  e.preventDefault();if(!fv7Require())return;
+  fv7Guard('profile-save',async()=>{
+   $('fv7-profile-status').textContent='Saving…';
+   await fv7Rpc('fv_save_player_profile',{
+     p_username:$('fv7-username').value.trim().toLowerCase(),p_display_name:$('fv7-display').value.trim(),p_bio:$('fv7-bio').value.trim(),p_avatar_icon:fv7Avatar,p_accent_color:fv7Accent,p_is_public:$('fv7-public').checked,p_notify:$('fv7-notify').checked
+   });
+   const {data,error}=await db.from('profiles').select('*').eq('id',user.id).maybeSingle();if(error)throw error;
+   profile=data;$('user-label').textContent=profile.display_name||profile.username;fv7ShowProfileSettings();$('fv7-profile-status').textContent='Profile saved successfully.';toast('Profile updated!');
+  });return;
+ }
+ if(form.id==='fv7-password-form'){
+  e.preventDefault();if(!fv7Require())return;const password=$('fv7-new-password').value;
+  if(password.length<8){toast('Use a password with at least 8 characters.');return;}
+  fv7Guard('password',async()=>{const {error}=await db.auth.updateUser({password});if(error)throw error;$('fv7-new-password').value='';toast('Password updated.');});return;
+ }
+ if(form.id==='fv7-feedback-form'){
+  e.preventDefault();if(!fv7Require())return;
+  const category=$('fv7-feedback-kind').value,body=$('fv7-feedback-body').value.trim();
+  fv7Guard('feedback',async()=>{await fv7Rpc('fv_social_submit_feedback',{p_category:category,p_body:body});$('fv7-feedback-form').reset();toast('Feedback submitted for review.');});return;
+ }
+ if(form.id==='fv7-report-form'){
+  e.preventDefault();if(!fv7ReportContext)return;
+  const ctx=fv7ReportContext,reason=$('fv7-report-reason').value.trim();
+  fv7Guard('report',async()=>{await fv7Rpc('fv_social_report',{p_kind:ctx.kind,p_target:ctx.target,p_reason:reason});fv7CloseReport();toast('Report submitted to moderators.');});return;
+ }
+ if(form.id==='fv7-review-form'){e.preventDefault();fv7SaveReview();}
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'){
+  if(!$('fv7-report-modal').classList.contains('hidden'))fv7CloseReport();
+  if(!$('fv7-public-modal').classList.contains('hidden'))fv7ClosePublic();
+ }
+});
+// Refresh account notifications and a selected private conversation when the tab is visible.
+setInterval(()=>{if(document.hidden||!user)return;fv7UpdateUnread();if($('page-friends').classList.contains('active')&&fv7OpenChat)fv7LoadConversation({quiet:true});},25000);
+// Public player deep links are safe: only the user id travels in the URL, no email or token.
+if(new URLSearchParams(location.search).has('player')){
+ const id=new URLSearchParams(location.search).get('player');
+ if(fv7Uuid(id))setTimeout(()=>fv7PublicProfile(id),250);
+}

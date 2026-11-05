@@ -446,7 +446,10 @@ async function fvPerformGameAction(id,action){
  }
  renderGames();fvUpdateGameActions();
 }
-async function init(){if(!db){$("setup").classList.remove("hidden");$("status").textContent="Not connected";games=[];renderGames();$("posts").innerHTML='<div class="empty">Connect Supabase to activate the community feed.</div>';return;}let {error}=await db.from("games").select("id").limit(1);$("status").textContent=error?"Database issue":"Connected";await loadGames();const deepId=new URLSearchParams(location.search).get('game');if(deepId)fvOpenGame(deepId,{fromUrl:true});let {data}=await db.auth.getSession();user=data.session?.user||null;await updateUser();loadPosts();db.auth.onAuthStateChange((_e,s)=>{user=s?.user||null;setTimeout(updateUser,0);});}
+async function init(){if(!db){$("setup").classList.remove("hidden");$("status").textContent="Not connected";games=[];renderGames();$("posts").innerHTML='<div class="empty">Connect Supabase to activate the community feed.</div>';return;}let {error}=await db.from("games").select("id").limit(1);$("status").textContent=error?"Database issue":"Connected";await loadGames();const deepId=new URLSearchParams(location.search).get('game');if(deepId)fvOpenGame(deepId,{fromUrl:true});
+ // Auth state updates are deferred to avoid calling Supabase APIs synchronously from its callback.
+ db.auth.onAuthStateChange((event,s)=>{setTimeout(async()=>{if(event==='PASSWORD_RECOVERY'){fv8RecoveryMode=true;fv8ShowRecoveryModal();return;}if(fv8RecoveryMode&&s?.user){fv8ShowRecoveryModal();return;}if(!fv8RecoveryMode)await fv8CheckSession(s?.user||null);},0);});
+ let {data}=await db.auth.getSession();if(fv8RecoveryMode && data.session?.user)fv8ShowRecoveryModal();else await fv8CheckSession(data.session?.user||null);loadPosts();}
 document.addEventListener("click",async e=>{
  if(e.target.closest('[data-close-game]')){fvCloseGame();return;}
  if(e.target.closest('[data-close-info]')){fvCloseInfo();return;}
@@ -494,7 +497,7 @@ document.addEventListener("click",async e=>{
 if(e.target.closest("#genre-toggle")||e.target.closest("#more-genres")){const box=$("genres"),toggle=$("genre-toggle");const opening=box.classList.contains("collapsed");box.classList.toggle("collapsed",!opening);toggle.setAttribute("aria-expanded",String(opening));$("genre-chevron").textContent=opening?"⌃":"⌄";return;}let n=e.target.closest("[data-page]");if(n){page(n.dataset.page);return;}let sc=e.target.closest("[data-scroll]");if(sc){document.getElementById(sc.dataset.scroll)?.scrollIntoView({behavior:"smooth",block:"start"});return;}let go=e.target.closest("[data-go]");if(go){page(go.dataset.go);return;}if(e.target.id==="auth-open"){openAuth("login");return;}if(e.target.matches("[data-close]")){closeAuth();return;}let m=e.target.closest("[data-mode]");if(m){setMode(m.dataset.mode);return;}let g=e.target.closest('[data-game]');
 if(g){await fvPerformGameAction(g.dataset.game,g.dataset.action);return;}
 let a=e.target.closest("[data-accept]");if(a){let {error}=await db.from("friend_requests").update({status:"accepted"}).eq("id",a.dataset.accept);toast(error?error.message:"Friend request accepted!");loadFriends();return;}let s=e.target.closest("[data-send]");if(s){let {error}=await db.from("friend_requests").insert({sender_id:user.id,receiver_id:s.dataset.send});toast(error?error.message:"Friend request sent!");loadFriends();return;}if(e.target.id==="developer-signin"){openAuth("login");return;}let aa=e.target.closest("[data-admin-app]");if(aa){let {error}=await db.from("developer_applications").update({status:aa.dataset.status,reviewed_at:new Date().toISOString()}).eq("id",aa.dataset.adminApp);toast(error?error.message:"Application "+aa.dataset.status+".");loadDeveloperPortal();return;}let ag=e.target.closest("[data-admin-game]");if(ag){let {error}=await db.from("developer_game_submissions").update({status:ag.dataset.status,reviewed_at:new Date().toISOString()}).eq("id",ag.dataset.adminGame);toast(error?error.message:"Game submission "+ag.dataset.status+".");loadAdminQueue();return;}if(e.target.id==="sign-out"){await db.auth.signOut();toast("Signed out.");}});
-$("auth-form").addEventListener("submit",async e=>{e.preventDefault();if(!db){toast("Add Supabase settings to app.js first.");return;}let email=$("email").value.trim(),password=$("password").value,msg=$("auth-message");msg.textContent="Please wait…";let result;if(authMode==="signup"){let username=$("username").value.trim().toLowerCase(),display_name=$("display").value.trim()||username;if(!/^[a-z0-9_]{3,24}$/.test(username)){msg.textContent="Username: 3–24 letters, numbers or underscores.";return;}result=await db.auth.signUp({email,password,options:{data:{username,display_name}}});}else result=await db.auth.signInWithPassword({email,password});if(result.error){msg.textContent=result.error.message;return;}if(authMode==="signup"&&!result.data.session){msg.textContent="Account created! Check your email to confirm, then sign in.";return;}closeAuth();$("auth-form").reset();toast("Welcome to FluxVerse!");});
+$("auth-form").addEventListener("submit",async e=>{e.preventDefault();if(!db){toast("Add Supabase settings to app.js first.");return;}let email=$("email").value.trim(),password=$("password").value,msg=$("auth-message");msg.textContent="Please wait…";let result;if(authMode==="signup"){let username=$("username").value.trim().toLowerCase(),display_name=$("display").value.trim()||username;if(!/^[a-z0-9_]{3,24}$/.test(username)){msg.textContent="Username: 3–24 letters, numbers or underscores.";return;}result=await db.auth.signUp({email,password,options:{data:{username,display_name}}});}else result=await db.auth.signInWithPassword({email,password});if(result.error){msg.textContent=result.error.message;return;}if(authMode==="signup"&&!result.data.session){msg.textContent="Account created! Check your email to confirm, then sign in.";return;}$("auth-form").reset();await fv8CheckSession(result.data?.user||null);closeAuth();if(fv8MfaPending)toast('Enter your authenticator code to finish signing in.');else toast("Welcome to FluxVerse!");});
 $('search').addEventListener('input',e=>{fxHomeSelected=false;fxBrowseMode='all';activeGenre='All';renderGenres();renderAll(e.target.value);if(!$('page-store').classList.contains('active'))page('store');});
 $('fv-sort').addEventListener('change',()=>renderGames());
 $("search").addEventListener("keydown",e=>{if(e.key==='Enter'){e.preventDefault();page('store');$('all-games').scrollIntoView({behavior:'smooth'});}});
@@ -842,7 +845,7 @@ document.addEventListener('click',e=>{
  const reviewed=target.closest('[data-fv7-feedback-reviewed]');if(reviewed){fv7Guard('feedback-review',async()=>{await fv7Rpc('fv_social_admin_mark_feedback',{p_id:reviewed.dataset.fv7FeedbackReviewed});await fv7LoadFeedback();toast('Feedback marked reviewed.');});return;}
  if(target.closest('#fv7-notifications-read')){fv7Guard('notifications-all',async()=>{await fv7Rpc('fv_social_mark_notifications',{});await fv7LoadNotifications();toast('Notifications marked as read.');});return;}
  if(target.closest('#fv7-share-profile')){const url=new URL(location.href);url.searchParams.delete('game');url.searchParams.set('player',user?.id||'');navigator.clipboard?.writeText(url.href).then(()=>toast('Profile link copied!')).catch(()=>fvShowInfo('Profile link',url.href));return;}
- if(target.closest('#fv7-send-reset')){if(!user?.email){toast('Please sign in to use password reset.');return;}fv7Guard('reset-password',async()=>{const {error}=await db.auth.resetPasswordForEmail(user.email,{redirectTo:location.origin+location.pathname});if(error)throw error;toast('Password reset email requested. Check your inbox.');});return;}
+ if(target.closest('#fv7-send-reset')){if(!user?.email){toast('Please sign in to use password reset.');return;}fv7Guard('reset-password',async()=>{const {error}=await db.auth.resetPasswordForEmail(user.email,{redirectTo:location.origin+location.pathname+'?fv_reset=1'});if(error)throw error;toast('Password reset email requested. Check your inbox.');});return;}
  if(target.closest('#fv7-remove-review')){if(fv7ActiveReviewGame&&confirm('Remove your review?'))fv7Guard('remove-review',async()=>{await fv7Rpc('fv_social_remove_review',{p_game_id:fv7ActiveReviewGame});toast('Review removed.');await fv7LoadGameReviews(fv7ActiveReviewGame);});return;}
 });
 document.addEventListener('submit',e=>{
@@ -890,3 +893,222 @@ if(new URLSearchParams(location.search).has('player')){
  const id=new URLSearchParams(location.search).get('player');
  if(fv7Uuid(id))setTimeout(()=>fv7PublicProfile(id),250);
 }
+
+
+// ---------- FluxVerse v8: Account recovery + authenticator-app MFA ----------
+// The Supabase publishable key is the ONLY key in this browser application.
+// Recovery requests do not return account emails or confirm whether usernames exist.
+let fv8RecoveryMode=new URLSearchParams(location.search).get('fv_reset')==='1';
+let fv8MfaPending=null;
+let fv8MfaFactorId=null;
+let fv8MfaEnrolling=null;
+let fv8AuthEpoch=0;
+let fv8Checking=false;
+
+function fv8AuthPane(which='login'){
+ const sign=which==='login';
+ $('auth-form').classList.toggle('hidden',!sign);
+ $('fv8-auth-tabs').classList.toggle('hidden',!sign);
+ $('fv8-auth-links').classList.toggle('hidden',!sign || authMode==='signup');
+ $('fv8-forgot-password-form').classList.toggle('hidden',which!=='password');
+ $('fv8-forgot-email-form').classList.toggle('hidden',which!=='email');
+ if(which==='password')$('fv8-reset-email').value=$('email').value||'';
+ if(which!=='login')$('modal').classList.remove('hidden');
+}
+const fv8OriginalMode=setMode;
+setMode=function(mode){fv8OriginalMode(mode);fv8AuthPane('login');};
+function fv8ShowRecoveryModal(){
+ closeAuth();$('fv8-mfa-modal').classList.add('hidden');
+ $('fv8-reset-modal').classList.remove('hidden');
+ $('fv8-new-password-status').textContent='';
+ $('fv8-new-password').focus();
+}
+function fv8ShowMfaPrompt(){
+ $('fv8-mfa-modal').classList.remove('hidden');
+ $('fv8-mfa-signin-status').textContent='';
+ $('fv8-mfa-signin-code').value='';
+ closeAuth();
+ $('fv8-mfa-signin-code').focus();
+}
+function fv8HideMfaPrompt(){$('fv8-mfa-modal').classList.add('hidden');}
+async function fv8CheckSession(authUser){
+ if(!db || fv8RecoveryMode)return;
+ const epoch=++fv8AuthEpoch;
+ if(!authUser){
+  fv8MfaPending=null;fv8MfaFactorId=null;fv8HideMfaPrompt();
+  user=null;await updateUser();return;
+ }
+ const {data,error}=await db.auth.mfa.getAuthenticatorAssuranceLevel();
+ if(epoch!==fv8AuthEpoch)return;
+ if(error){
+  fv8MfaPending=authUser;user=null;await updateUser();fv8ShowMfaPrompt();
+  $('fv8-mfa-signin-status').textContent='Could not check account security: '+error.message;
+  return;
+ }
+ if(data?.currentLevel==='aal1' && data?.nextLevel==='aal2'){
+  fv8MfaPending=authUser;user=null;
+  await updateUser();
+  const result=await db.auth.mfa.listFactors();
+  if(epoch!==fv8AuthEpoch)return;
+  if(result.error){fv8MfaFactorId=null;}else{
+   const factors=[...(result.data?.totp||[]),...(result.data?.all||[])];
+   fv8MfaFactorId=factors.find(f=>f.factor_type==='totp' && f.status==='verified')?.id||null;
+  }
+  fv8ShowMfaPrompt();
+  if(!fv8MfaFactorId)$('fv8-mfa-signin-status').textContent='Unable to load your authenticator. Sign out and contact support if this continues.';
+  return;
+ }
+ fv8MfaPending=null;fv8MfaFactorId=null;fv8HideMfaPrompt();
+ user=authUser;
+ await updateUser();
+ if($('page-profile')?.classList.contains('active'))fv8RefreshMfaStatus();
+ if($('page-help')?.classList.contains('active'))fv8LoadRecoveryRequests();
+}
+async function fv8RefreshMfaStatus(){
+ if(!db || !user)return;
+ const {data,error}=await db.auth.mfa.listFactors();
+ if(error){$('fv8-mfa-status').textContent='Could not load security settings: '+error.message;return;}
+ const factors=[...(data?.totp||[]),...(data?.all||[])];
+ const verified=factors.find(f=>f.factor_type==='totp'&&f.status==='verified');
+ $('fv8-mfa-status').textContent=verified?'Enabled — authenticator app is linked.':'Off — enable it to protect your account.';
+ $('fv8-mfa-enroll-button').classList.toggle('hidden',!!verified);
+ $('fv8-mfa-disable-button').classList.toggle('hidden',!verified);
+ $('fv8-mfa-disable-button').dataset.factorId=verified?.id||'';
+}
+async function fv8BeginEnroll(){
+ if(!user)return toast('Please sign in first.');
+ if(fv8MfaEnrolling)return;
+ const btn=$('fv8-mfa-enroll-button');btn.disabled=true;
+ try{
+  const {data,error}=await db.auth.mfa.enroll({factorType:'totp',friendlyName:'FluxVerse authenticator'});
+  if(error)throw error;
+  fv8MfaEnrolling=data;
+  const qr=String(data?.totp?.qr_code||'');
+  // Supabase returns a local data URL; do not send authentication secrets to an external QR provider.
+  $('fv8-mfa-qr').src=qr.startsWith('data:image/svg+xml;')?qr:qr.startsWith('data:image/png;')?qr:'';
+  $('fv8-mfa-qr').classList.toggle('hidden',!$('fv8-mfa-qr').src);
+  $('fv8-mfa-secret').textContent=String(data?.totp?.secret||'');
+  $('fv8-mfa-enroll-panel').classList.remove('hidden');
+  $('fv8-mfa-status').textContent='Setup started. Verify your first code to finish.';
+ }catch(err){$('fv8-mfa-status').textContent='Could not start setup: '+err.message;}
+ finally{btn.disabled=false;}
+}
+async function fv8FinishEnroll(code){
+ if(!fv8MfaEnrolling)throw new Error('Start setup first.');
+ const {error}=await db.auth.mfa.challengeAndVerify({factorId:fv8MfaEnrolling.id,code});
+ if(error)throw error;
+ fv8MfaEnrolling=null;
+ $('fv8-mfa-enroll-panel').classList.add('hidden');
+ $('fv8-mfa-enroll-form').reset();
+ $('fv8-mfa-secret').textContent='';$('fv8-mfa-qr').removeAttribute('src');
+ await fv8RefreshMfaStatus();toast('Two-step verification is enabled!');
+}
+async function fv8CancelEnroll(){
+ if(fv8MfaEnrolling){
+  const pending=fv8MfaEnrolling;fv8MfaEnrolling=null;
+  try{await db.auth.mfa.unenroll({factorId:pending.id});}catch(e){/* unverified factor may expire */}
+ }
+ $('fv8-mfa-enroll-panel').classList.add('hidden');
+ $('fv8-mfa-secret').textContent='';$('fv8-mfa-qr').removeAttribute('src');
+ await fv8RefreshMfaStatus();
+}
+async function fv8LoadRecoveryRequests(){
+ if(!db || !user)return;
+ const section=$('fv8-admin-recovery');
+ const {data:admin,error:adminError}=await db.rpc('is_fluxverse_admin');
+ if(adminError || admin!==true){section.classList.add('hidden');return;}
+ section.classList.remove('hidden');
+ const {data,error}=await db.rpc('fv8_admin_recovery_requests');
+ if(error){$('fv8-recovery-list').textContent='Recovery queue unavailable: '+error.message;return;}
+ $('fv8-recovery-list').innerHTML=(data||[]).length?(data||[]).map(r=>`<div class="fv7-report-card"><b>@${esc(r.claimed_username)} · ${esc(r.status)}</b><p>Reply-to: ${esc(r.contact_email)}</p><p>${esc(r.details||'No extra details provided')}</p><small>${esc(r.created_at)}</small>${r.status==='open'?`<button type="button" data-fv8-recovery-review="${esc(r.id)}">Mark reviewed</button>`:''}</div>`).join(''):'<p class="muted">No account recovery requests.</p>';
+}
+
+// Existing v7 navigation remains untouched; only refresh these security controls when relevant.
+const fv8OriginalPage=page;
+page=function(name){fv8OriginalPage(name);if(name==='profile')fv8RefreshMfaStatus();if(name==='help')fv8LoadRecoveryRequests();};
+
+document.addEventListener('click',async e=>{
+ if(e.target.closest('#fv8-forgot-password')){fv8AuthPane('password');return;}
+ if(e.target.closest('#fv8-forgot-email')){fv8AuthPane('email');return;}
+ if(e.target.closest('[data-fv8-back-login]')){fv8AuthPane('login');return;}
+ if(e.target.closest('#fv8-mfa-enroll-button')){await fv8BeginEnroll();return;}
+ if(e.target.closest('#fv8-mfa-cancel-enroll')){await fv8CancelEnroll();return;}
+ if(e.target.closest('#fv8-mfa-disable-button')){
+  const id=$('fv8-mfa-disable-button').dataset.factorId;
+  if(!id || !confirm('Disable two-step verification for your FluxVerse account? This reduces account security.'))return;
+  $('fv8-mfa-disable-button').disabled=true;
+  try{const {error}=await db.auth.mfa.unenroll({factorId:id});if(error)throw error;await fv8RefreshMfaStatus();toast('Two-step verification disabled.');}
+  catch(err){$('fv8-mfa-status').textContent='Could not disable: '+err.message;}
+  finally{$('fv8-mfa-disable-button').disabled=false;}
+  return;
+ }
+ if(e.target.closest('#fv8-mfa-signout')){
+  await db.auth.signOut();fv8HideMfaPrompt();fv8MfaPending=null;fv8MfaFactorId=null;
+  toast('Signed out.');return;
+ }
+ if(e.target.closest('#fv8-recovery-refresh')){fv8LoadRecoveryRequests();return;}
+ const mark=e.target.closest('[data-fv8-recovery-review]');
+ if(mark){const {error}=await db.rpc('fv8_admin_review_recovery',{p_id:mark.dataset.fv8RecoveryReview});if(error)toast(error.message);else{toast('Request marked reviewed.');fv8LoadRecoveryRequests();}return;}
+});
+
+document.addEventListener('submit',async e=>{
+ if(e.target.id==='fv8-forgot-password-form'){
+  e.preventDefault();const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;
+  const msg=$('fv8-forgot-status');msg.textContent='Sending…';
+  try{const {error}=await db.auth.resetPasswordForEmail($('fv8-reset-email').value.trim(),{redirectTo:location.origin+location.pathname+'?fv_reset=1'});
+   if(error)throw error;
+   msg.textContent='If that email belongs to an account, a password-reset link will arrive. Check spam too.';
+  }catch(err){msg.textContent='Could not request reset: '+err.message;}
+  finally{btn.disabled=false;}
+  return;
+ }
+ if(e.target.id==='fv8-forgot-email-form'){
+  e.preventDefault();const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;
+  const msg=$('fv8-email-status');msg.textContent='Submitting…';
+  try{const {error}=await db.rpc('fv8_request_email_recovery',{p_username:$('fv8-recovery-username').value.trim(),p_contact_email:$('fv8-recovery-contact').value.trim(),p_details:$('fv8-recovery-details').value.trim()});
+   if(error)throw error;
+   msg.textContent='Request received for manual review. We cannot confirm an account or reveal its email here. Keep access to your contact email.';
+   $('fv8-forgot-email-form').reset();
+  }catch(err){msg.textContent='Could not submit request: '+err.message;}
+  finally{btn.disabled=false;}
+  return;
+ }
+ if(e.target.id==='fv8-new-password-form'){
+  e.preventDefault();const pass=$('fv8-new-password').value,confirmPass=$('fv8-confirm-password').value,msg=$('fv8-new-password-status');
+  if(pass!==confirmPass){msg.textContent='The passwords do not match.';return;}
+  if(pass.length<10){msg.textContent='Use at least 10 characters.';return;}
+  const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;
+  msg.textContent='Saving new password…';
+  try{const {error}=await db.auth.updateUser({password:pass});if(error)throw error;
+   msg.textContent='Password updated. Please sign in again.';
+   fv8RecoveryMode=false;
+   await db.auth.signOut();
+   $('fv8-reset-modal').classList.add('hidden');
+   $('fv8-new-password-form').reset();
+   // Remove recovery URL fragments so they are not copied or reused.
+   history.replaceState(null,'',location.pathname);
+   openAuth('login');toast('Password reset complete. Sign in with your new password.');
+  }catch(err){msg.textContent='Could not update password: '+err.message;}
+  finally{btn.disabled=false;}
+  return;
+ }
+ if(e.target.id==='fv8-mfa-signin-form'){
+  e.preventDefault();const msg=$('fv8-mfa-signin-status'),code=$('fv8-mfa-signin-code').value.trim();
+  if(!fv8MfaPending||!fv8MfaFactorId){msg.textContent='No verified factor is available. Sign out and contact support.';return;}
+  if(!/^[0-9]{6}$/.test(code)){msg.textContent='Enter a 6-digit code.';return;}
+  const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;msg.textContent='Verifying…';
+  try{const {error}=await db.auth.mfa.challengeAndVerify({factorId:fv8MfaFactorId,code});if(error)throw error;
+   const verifiedUser=fv8MfaPending;await fv8CheckSession(verifiedUser);
+   if(!fv8MfaPending)toast('Two-step verification successful!');
+  }catch(err){msg.textContent='Could not verify code: '+err.message;}
+  finally{btn.disabled=false;}
+  return;
+ }
+ if(e.target.id==='fv8-mfa-enroll-form'){
+  e.preventDefault();const btn=e.target.querySelector('button[type="submit"]');btn.disabled=true;
+  try{await fv8FinishEnroll($('fv8-mfa-enroll-code').value.trim());}
+  catch(err){$('fv8-mfa-status').textContent='Could not enable: '+err.message;}
+  finally{btn.disabled=false;}
+  return;
+ }
+});

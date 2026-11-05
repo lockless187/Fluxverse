@@ -13,7 +13,7 @@
  <nav>
   <button class="active" data-page="store">▣ <span>Store</span></button>
   <button data-page="library">◧ <span>Library</span></button>
-  <button data-page="community">♥ <span>Community</span></button>
+  <button data-page="wishlist">♥ <span>Wishlist</span></button>
   <button data-page="friends">♧ <span>Friends</span></button>
   <button data-page="developer">‹/› <span>Developer Portal</span></button>
  </nav>
@@ -33,12 +33,13 @@
   </aside>
   <div class="store-main">
    <div class="store-top-grid">
-    <div class="store-hero" id="store-hero"><div class="store-hero-copy"><span class="hero-label">✦ FEATURED ON FLUXVERSE</span><h2 id="hero-title">Enter the City</h2><p id="hero-description">Experience the ultimate open-world RPG in a dystopian future.</p><button class="primary" data-scroll="featured">Shop Now →</button></div><div class="hero-dots"><i></i><i></i><i></i><i></i><i></i></div></div>
-    <aside class="daily-deals"><div class="rail-heading"><h3>◷ Daily Deals</h3><button data-scroll="deals">View All →</button></div><div id="daily-deal-list"><div class="deal-placeholder">Special offers will appear here when active.</div></div></aside>
+    <div class="store-hero" id="store-hero"><div class="store-hero-copy"><span class="hero-label">CYBERPUNK <span class="hero-year">2 0 7 7</span></span><h2 id="hero-title">Enter the City</h2><p id="hero-description">Experience the ultimate open-world RPG in a dystopian future.</p><button class="primary" data-scroll="featured">Shop Now →</button></div><div class="hero-dots"><i></i><i></i><i></i><i></i><i></i></div></div>
+    <aside class="daily-deals"><div class="rail-heading"><h3>☆ Daily Deals</h3><span class="demo-kicker">DESIGN PREVIEW</span></div><div id="daily-deal-list"><div class="deal-placeholder">Special offers will appear here when active.</div></div></aside>
    </div>
+   <p class="preview-note">STORE DESIGN PREVIEW · Featured covers and discounts are illustrative. Browse real listings in All Games below.</p>
    <div class="feature-weekend-grid">
     <section class="store-section featured-section" id="featured"><div class="store-section-heading"><h2>★ &nbsp;Featured Games</h2><button data-scroll="all-games">View All →</button></div><div id="featured-games" class="store-game-grid"></div></section>
-    <article class="weekend-banner"><div class="weekend-copy"><span>🎁</span><h2>Free Weekend</h2><p>Play for free this weekend!</p><button class="primary" data-scroll="all-games">Play Free Now →</button></div></article>
+    <article class="weekend-banner"><div class="weekend-copy"><span>🎁</span><h2>FREE<br>WEEKEND</h2><p>Explore free games on FluxVerse!</p><button class="primary" data-genre="Free to Play">Browse Free Games →</button></div></article>
    </div>
    <div class="store-bottom-grid">
     <div class="store-section" id="free-to-play-section"><div class="store-section-heading"><h2>◆ &nbsp;Free to Play</h2><button data-genre="Free to Play">See All →</button></div><div id="free-games" class="store-game-grid"></div></div>
@@ -48,6 +49,7 @@
   </div>
  </div>
 </section>
+<section id="page-wishlist" class="page"><div class="pagehead"><small>YOUR PICKS</small><h1>Your <em>wishlist.</em></h1><p>Games you saved for later.</p></div><div id="wishlist-list" class="games"></div></section>
 <section id="page-library" class="page"><div class="pagehead"><small>YOUR COLLECTION</small><h1>Your <em>library.</em></h1><p>Every adventure starts somewhere.</p></div><div id="library-list" class="games"></div></section>
 <section id="page-community" class="page"><div class="pagehead"><small>THE PLAYER LOUNGE</small><h1>Community <em>hub.</em></h1><p>Talk games, share your thoughts, meet your next squad.</p></div><form id="post-form" class="panel"><textarea id="post-text" maxlength="5000" placeholder="What's happening in your gaming universe?" required></textarea><button class="primary">Post ↗</button></form><div id="posts"></div></section>
 <section id="page-friends" class="page"><div class="pagehead"><small>YOUR CREW</small><h1>Play <em>together.</em></h1><p>Find players and grow your circle.</p></div><div class="columns"><div class="panel"><h3>Find players</h3><form id="friend-form" class="inline"><input id="friend-name" placeholder="Exact username"><button class="primary">Search</button></form><div id="friend-results"></div></div><div class="panel"><h3>Friend requests</h3><div id="requests">Sign in to see requests.</div></div><div class="panel wide"><h3>Your friends</h3><div id="friend-list">Sign in to see friends.</div></div></div></section>

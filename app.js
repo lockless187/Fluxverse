@@ -834,7 +834,7 @@ document.addEventListener('click',e=>{
  const delComment=target.closest('[data-fv7-delete-comment]');if(delComment){if(confirm('Delete this reply?'))fv7Guard('delete-comment',async()=>{await fv7Rpc('fv_social_delete_comment',{p_id:delComment.dataset.fv7DeleteComment});toast('Reply deleted.');await fv7LoadPosts();});return;}
  const report=target.closest('[data-fv7-report]');if(report){fv7OpenReport(report.dataset.fv7Report,report.dataset.target);return;}
  const mark=target.closest('[data-fv7-mark]');if(mark){fv7Guard('notification',async()=>{await fv7Rpc('fv_social_mark_notifications',{p_id:mark.dataset.fv7Mark});await fv7LoadNotifications();});return;}
- const reportReview=target.closest('[data-fv7-review-report]');if(reportReview){fv7Guard('report-moderation',async()=>{await fv7Rpc('fv_social_admin_review_report',{p_id:reportReview.dataset.target,p_status:reportReview.dataset.fv7ReviewReport});await fv7LoadReports();toast('Report updated.');});return;}
+ const reportReview=target.closest('[data-fv7-review-report]');if(reportReview){fv7Guard('report-moderation',async()=>{await fv7Rpc('fv91_admin_handle_report',{p_report:reportReview.dataset.target,p_action:reportReview.dataset.fv7ReviewReport,p_reason:''});await fv7LoadReports();await fv91RefreshAdmin();toast('Report updated.');});return;}
  if(target.closest('[data-fv7-close-public]')){fv7ClosePublic();return;}
  if(target.closest('[data-fv7-close-report]')){fv7CloseReport();return;}
  if(target.closest('#fv7-public-signin')||target.closest('#fv7-profile-login')){fv7ClosePublic();openAuth('login');return;}
@@ -1296,7 +1296,7 @@ async function fv9RefreshModerator(){
   panel.classList.remove('hidden');
   const [data,reports]=await Promise.all([fv7Rpc('fv9_admin_safety_queue'),fv7Rpc('fv_social_admin_reports')]);
   $('fv9-deletion-queue').innerHTML=(data?.deletion_requests||[]).map(r=>`<div class="fv9-admin-row"><b>@${fv9Safe(r.username)}</b><small>Player ID: <code>${fv9Safe(r.user_id)}</code></small><small>Requested: ${fv9DisplayDate(r.requested_at)}</small><p>${fv9Safe(r.reason||'No reason given')}</p><span class="fv9-pill">${fv9Safe(r.status)}</span><p class="fv9-fineprint">Verify account ownership and follow your manual deletion procedure. Never delete another player's account from this browser.</p></div>`).join('')||'<p class="muted">No pending account-deletion requests.</p>';
-  $('fv9-report-queue').innerHTML=(reports||[]).map(r=>`<div class="fv9-admin-row"><b>${fv9Safe(r.target_kind)} · ${fv9Safe(r.status)}</b><p>${fv9Safe(r.reason)}</p><small>Target ID: <code>${fv9Safe(r.target_id)}</code></small><div class="fv9-actions">${['post','comment'].includes(r.target_kind)?`<button type="button" data-fv9-remove="${fv9Safe(r.target_kind)}" data-target="${fv9Safe(r.target_id)}" data-report="${fv9Safe(r.id)}" class="outline fv9-danger">Remove content</button>`:''}<button type="button" class="outline" data-fv9-report="reviewed" data-report="${fv9Safe(r.id)}">Reviewed</button><button type="button" class="outline" data-fv9-report="dismissed" data-report="${fv9Safe(r.id)}">Dismiss</button></div></div>`).join('')||'<p class="muted">No reports to review.</p>';
+  $('fv9-report-queue').innerHTML='<p class="muted">Use the verified report queue below for reviewed, dismissed, warned and removed actions.</p>';
   $('fv9-moderation-log').innerHTML=(data?.moderation_log||[]).map(x=>`<div class="fv9-admin-row"><b>${fv9Safe(x.action)}</b> · ${fv9Safe(x.target_id)}<p>${fv9Safe(x.reason)}</p><small>${fv9DisplayDate(x.created_at)}</small></div>`).join('')||'<p class="muted">No moderation actions logged yet.</p>';
  }catch(err){panel.classList.remove('hidden');$('fv9-admin-message').textContent=`Safety queue unavailable: ${err.message}`;}
 }
@@ -1423,9 +1423,102 @@ document.addEventListener('submit',e=>{
   e.preventDefault();const f=form.elements;api('fv9_admin_create_game_achievement',{p_game_id:f.game.value.trim(),p_code:f.code.value.trim(),p_title:f.title.value.trim(),p_description:f.description.value.trim(),p_icon:f.icon.value||'🏆'},'Achievement definition created.');return;
  }
  if(form.id==='fv9-achievement-award'){
-  e.preventDefault();const f=form.elements;api('fv9_admin_award_game_achievement',{p_player:f.player.value.trim(),p_achievement:f.achievement.value.trim()},'Verified achievement awarded.');return;
+  e.preventDefault();const f=form.elements;
+  if(!confirm('Only award after verifying the player completed this achievement. Continue?'))return;
+  fv7Guard('fv91-award',async()=>{
+    const result=await fv7Rpc('fv91_admin_achievement_award',{p_player:f.player.value.trim(),p_achievement:f.achievement.value.trim()});
+    $('fv91-achievement-result').textContent=result.persisted?(result.new_award?'Verified and saved!':'Already awarded; no duplicate created.')+' Award date: '+fv9DisplayDate(result.awarded_at):'Award could not be confirmed';
+    toast(result.new_award?'Achievement granted and verified.':'Achievement already saved.');
+  });return;
  }
  if(form.id==='fv9-badge-grant'){
   e.preventDefault();const f=form.elements;api('fv9_admin_grant_badge',{p_player:f.player.value.trim(),p_badge:f.badge.value},'Special badge granted.');return;
  }
+});
+
+
+/* FluxVerse v9.1 — server-verified achievements, moderator actions, anti-spam visibility */
+let fv91Reports=[];
+async function fv91RefreshAdmin(){
+  if(!user || !db || !$('fv91-suite'))return;
+  try{
+    const isAdmin=await fv7Rpc('is_fluxverse_admin');
+    if(isAdmin!==true){$('fv91-suite').classList.add('hidden');return;}
+    $('fv91-suite').classList.remove('hidden');
+    const [reports,activity]=await Promise.all([fv7Rpc('fv91_admin_reports'),fv7Rpc('fv91_admin_recent_actions')]);
+    fv91Reports=Array.isArray(reports)?reports:[];
+    const pending=fv91Reports.filter(r=>r.status==='open');
+    $('fv91-reports').innerHTML=pending.map(r=>{
+      const ref=String(r.id||'');
+      const canRemove=['post','comment'].includes(r.kind) && !!r.author_id;
+      const canWarn=['post','comment','profile','message'].includes(r.kind) && !!r.author_id;
+      return `<article class="fv91-report">
+       <div class="fv91-headline"><strong>${fv9Safe(r.kind)} · ${fv9Safe(r.status)}</strong><small>${fv9DisplayDate(r.created_at)}</small></div>
+       <p><b>Reported reason:</b> ${fv9Safe(r.reason)}</p>
+       ${r.preview?`<blockquote>${fv9Safe(r.preview)}</blockquote>`:'<p class="muted">No public content preview. Verify the report separately before taking action.</p>'}
+       <small>Target: <code>${fv9Safe(r.target_id)}</code></small>
+       ${r.author_id?`<small>Reported account: <code>${fv9Safe(r.author_id)}</code></small>`:''}
+       <div class="fv91-buttons">
+        <button type="button" class="outline" data-fv91-handle="reviewed" data-report="${fv9Safe(ref)}">Mark reviewed</button>
+        <button type="button" class="outline" data-fv91-handle="dismissed" data-report="${fv9Safe(ref)}">Dismiss</button>
+        ${canWarn?`<button type="button" class="outline" data-fv91-handle="warn" data-report="${fv9Safe(ref)}">Warn player</button>`:''}
+        ${canRemove?`<button type="button" class="outline fv9-danger" data-fv91-handle="remove" data-report="${fv9Safe(ref)}">Remove reported ${fv9Safe(r.kind)}</button>`:''}
+        ${r.author_id?`<button type="button" class="outline" data-fv91-copy-id="${fv9Safe(r.author_id)}">Copy player ID</button>`:''}
+       </div></article>`;
+    }).join('')||'<p class="muted">No reports awaiting review.</p>';
+    $('fv91-mutes').innerHTML=(activity?.mutes||[]).map(m=>`<div class="fv91-row"><b>Restricted until ${fv9DisplayDate(m.until_at)}</b><small><code>${fv9Safe(m.user_id)}</code></small><p>${fv9Safe(m.reason)}</p></div>`).join('')||'<p class="muted">No active posting restrictions.</p>';
+    $('fv91-audit').innerHTML=(activity?.actions||[]).map(a=>`<div class="fv91-row"><b>${fv9Safe(a.action)}</b> · ${fv9DisplayDate(a.created_at)}<p>${fv9Safe(a.reason||'No additional reason')}</p><small>${fv9Safe(a.target_user_id||'Report only')}</small></div>`).join('')||'<p class="muted">No v9.1 moderation actions yet.</p>';
+    $('fv91-status').textContent=`${pending.length} pending report(s) · ${fv91Reports.length} recent report(s).`;
+  }catch(err){$('fv91-status').textContent='Security tools unavailable: '+err.message;}
+}
+async function fv91ShowNotices(){
+  if(!fv7Require())return;
+  try{
+    const info=await fv7Rpc('fv91_my_safety_status');
+    const el=$('fv91-notices');if(!el)return;
+    const warnings=info?.warnings||[];
+    el.innerHTML=(info?.restricted_until?`<p>Posting restricted until ${fv9Safe(fv9DisplayDate(info.restricted_until))}.</p>`:'<p>No active posting restrictions.</p>')+
+    (warnings.length?warnings.map(w=>`<div class="fv91-notice">Warning received ${fv9Safe(fv9DisplayDate(w.created_at))}: ${fv9Safe(w.reason)}</div>`).join(''):'<p>No moderation warnings.</p>');
+  }catch(err){$('fv91-notices').textContent='Could not load notices: '+err.message;}
+}
+const fv91OriginalPage=page;
+page=function(name){fv91OriginalPage(name);if(name==='help'&&user)fv91RefreshAdmin();};
+document.addEventListener('click',e=>{
+ if(e.target.closest('#fv91-refresh')){fv91RefreshAdmin();return;}
+ if(e.target.closest('#fv91-my-notices')){fv91ShowNotices();return;}
+ if(e.target.closest('#fv91-achievement-check')){
+   const f=$('fv9-achievement-award')?.elements;if(!f)return;
+   const p=f.player.value.trim(),a=f.achievement.value.trim();
+   if(!p||!a){$('fv91-achievement-result').textContent='Enter a player ID and achievement ID first.';return;}
+   fv7Guard('fv91-achievement-check',async()=>{
+     const data=await fv7Rpc('fv91_admin_achievement_check',{p_player:p,p_achievement:a});
+     $('fv91-achievement-result').textContent=`${data.message}. Achievement: ${data.achievement}. Game ID: ${data.game_id}.`;
+   });return;
+ }
+ const copy=e.target.closest('[data-fv91-copy-id]');if(copy){if(navigator.clipboard?.writeText){navigator.clipboard.writeText(copy.dataset.fv91CopyId).then(()=>toast('Player ID copied.')).catch(()=>toast('Copy not available — select the ID from the report.'));}else toast('Select the Player ID shown in the report to copy it.');return;}
+ const b=e.target.closest('[data-fv91-handle]');if(b){
+   const action=b.dataset.fv91Handle,report=b.dataset.report;
+   const r=fv91Reports.find(x=>String(x.id)===report);
+   if(!r)return;
+   if(!confirm(`${action.toUpperCase()} this ${r.kind} report? Check the evidence first.`))return;
+   const needsReason=['warn','remove'].includes(action);
+   const reason=needsReason?prompt('Moderation reason (10–500 characters):',''):'';
+   if(reason===null||needsReason&&(reason.trim().length<10||reason.trim().length>500)){if(needsReason)toast('Please give a reason between 10 and 500 characters.');return;}
+   fv7Guard('fv91-moderate',async()=>{
+     await fv7Rpc('fv91_admin_handle_report',{p_report:report,p_action:action,p_reason:reason.trim()});
+     toast('Action recorded and report updated.');await Promise.all([fv91RefreshAdmin(),fv9RefreshModerator()]);
+   });return;
+ }
+});
+document.addEventListener('submit',e=>{
+ if(e.target.id!=='fv91-mute-form')return;
+ e.preventDefault();const f=e.target.elements;
+ const player=f.player.value.trim(),hours=Number(f.hours.value),reason=f.reason.value.trim();
+ if(!player||reason.length<10||reason.length>500){toast('Enter a valid player ID and a reason of 10–500 characters.');return;}
+ if(!confirm(hours===0?'Lift this player’s posting restriction?':`Restrict posts/messages for ${hours} hour(s)?`))return;
+ fv7Guard('fv91-mute',async()=>{
+   const result=await fv7Rpc('fv91_admin_set_mute',{p_player:player,p_hours:hours,p_reason:reason});
+   $('fv91-status').textContent=hours?`Restriction set until ${fv9DisplayDate(result.restricted_until)}`:'Posting restriction removed.';
+   f.player.value='';f.reason.value='';await fv91RefreshAdmin();toast('Restriction updated and audited.');
+ });
 });

@@ -719,3 +719,31 @@ body.fv-modal-open{overflow:hidden}
 .fx-topbar nav.fx-topnav button.active:after{background:linear-gradient(90deg,#ff3555,#ff9b20)!important;box-shadow:0 0 12px #ff493c66!important}
 @media(max-width:1200px){.fx-showcase-copy{padding:28px 19px!important}}
 @media(max-width:600px){.fx-showcase::before{background-position:center center!important}.fx-showcase-copy{padding:22px 12px!important}.fx-showcase-copy h1{font-size:47px!important}.fx-showcase-copy .fx-hero-actions button{font-size:11px!important;padding:8px 10px!important}}
+
+
+/* CINDER FOOTER ALIGNMENT ONLY — bring footer content toward the center. */
+footer {
+  width: min(calc(100% - 40px), 940px);
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  justify-content: center;
+  column-gap: clamp(22px, 3.8vw, 56px);
+  row-gap: 14px;
+}
+footer > * {
+  flex: 0 0 auto;
+}
+@media (max-width: 800px) {
+  footer {
+    width: calc(100% - 28px);
+    justify-content: center;
+    text-align: center;
+    column-gap: 20px;
+    row-gap: 12px;
+  }
+  footer .fv-legal-links {
+    justify-content: center;
+  }
+}

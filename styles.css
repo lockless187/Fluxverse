@@ -482,7 +482,7 @@ body.fv-modal-open{overflow:hidden}
 .fv8-auth-extra h3{margin:0;color:#f1faff;font-size:21px}
 .fv8-auth-extra p{margin:0;color:#aebdca;font-size:13px;line-height:1.5}
 .fv8-auth-extra label{display:grid;gap:6px;color:#ecf5f9;font-size:13px}
-.fv8-auth-extra input,.fv8-auth-extra textarea,.fv8-security-dialog input,.fv8-mfa-enroll input{width:100%;box-sizing:border-box;background:#050d18;color:#fff;border:1px solid #24516b;border-radius:7px;padding:11px}
+.fv8-auth-extra input,.fv8-auth-extra textarea,.fv8-security-dialog input{width:100%;box-sizing:border-box;background:#050d18;color:#fff;border:1px solid #24516b;border-radius:7px;padding:11px}
 .fv8-auth-extra.hidden{display:none!important}
 .fv8-security-modal{position:fixed;inset:0;z-index:100500;display:flex;align-items:center;justify-content:center;padding:18px}
 .fv8-security-modal.hidden{display:none!important}
@@ -491,12 +491,6 @@ body.fv-modal-open{overflow:hidden}
 .fv8-security-dialog h2{margin:0;font-size:28px;line-height:1.15}.fv8-security-dialog p{margin:0;color:#adc0cd;font-size:14px;line-height:1.55}
 .fv8-security-dialog form{display:grid;gap:12px}.fv8-security-dialog form label{display:grid;gap:6px;font-size:13px}
 .fv8-security-dialog button{min-height:39px}.fv8-kicker{font-size:11px;color:#bbff36;letter-spacing:2.1px;font-weight:800}
-.fv8-mfa-card{border-top:1px solid #12465c;margin-top:20px;padding-top:17px;display:grid;gap:10px}
-.fv8-mfa-card h3{margin:0}.fv8-mfa-card p{margin:0;color:#b1c5d0;font-size:13px;line-height:1.45}
-.fv8-mfa-card button{justify-self:start}.fv8-mfa-enroll{display:grid;gap:11px;padding:12px;background:#051522;border:1px solid #166a80;border-radius:9px}
-.fv8-mfa-enroll img{width:190px;height:190px;max-width:100%;object-fit:contain;background:white;border:8px solid white;border-radius:8px}
-.fv8-mfa-enroll code{display:block;max-width:100%;overflow-wrap:anywhere;font-size:12px;color:#a9ff74;user-select:all}
-.fv8-mfa-enroll form{display:grid;gap:10px}.fv8-mfa-card .fv8-small-warning,.fv8-small-warning{font-size:12px;color:#edcb68;line-height:1.5}
 .fv8-auth-extra .fine{font-size:11px;color:#b6bfcc}
 .fv8-security-dialog [role=status],.fv8-auth-extra [role=status]{font-size:12px;color:#bcff53}
 @media(max-width:520px){.fv8-security-dialog{padding:19px}.fv8-security-dialog h2{font-size:24px}}

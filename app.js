@@ -582,8 +582,8 @@ window.addEventListener('popstate',()=>{const id=new URLSearchParams(location.se
 
 /* ---- FluxVerse v7 Social, Profiles & Community Suite ----
    Additive to Store v6. Supabase SQL migration 01_SOCIAL_UPGRADE.sql required. */
-const fv7AvatarIcons=['🎮','🚀','⚡','🌌','👾','🐉','🏆','🛡️'];
-const fv7AccentColors=['#00c9ff','#98ff00','#ffe700','#ff9d00','#ff579d','#b699ff'];
+const fv7AvatarIcons=["🎮","🚀","⚡","🌌","👾","🐉","🏆","🛡️","🎯","🌟","🌠","🪐","🌙","☀️","🌈","🔥","❄️","🌊","🌋","🌵","🌲","🍁","🌸","🌼","🍀","🍄","🦋","🐝","🦉","🦅","🐺","🦊","🐻","🐼","🐯","🦁","🐲","🐬","🦈","🐙","🐢","🦎","🦂","🕷️","🦇","🦄","🦖","🐊","🐘","🦒","🦓","🐎","🦜","🦚","🐧","🦦","🦥","🤖","👽","👻","💀","🎃","🧙","🧛","🧟","👑","💎","🗡️","🏹","🔮","🪄","📜","⚙️","🔧","🛠️","🧲","💻","🖥️","⌨️","🕹️","🎲","♟️","🧩","🎨","🎭","🎸","🎧","🎹","🥁","🎷","🎺","🎻","📷","🎬","🛸","🚁","🏎️","🚂","⚓","🧭"];
+const fv7AccentColors=["#00c9ff","#98ff00","#ffe700","#ff9d00","#ff579d","#b699ff","#49e476","#a048e0","#dcc946","#45bfd8","#e84aa0","#70e449","#4e48e0","#dc7846","#45d8a1","#d935e8","#bfe434","#3389e0","#dc3356","#32d840","#7935e8","#e4aa34","#33e0d9","#dc33b1","#7dd832","#2041e8","#e43920","#1fe070","#a51fdc","#d7d81e","#20ade8","#e42071","#37e01f","#3f1fdc","#d8741e","#4ae8c1","#e449dd","#ace048","#467edc","#d84551","#4ae86c","#9749e4","#e0c148","#46cfdc","#d845a0","#70e835","#343be4","#e06033","#33dc8f","#bd32d8","#d1e835","#349ae4","#e03365","#33dc34","#6332d8","#e89620","#20e4cd","#e01fbe","#84dc1f","#1e4bd8","#e82a20","#20e463","#991fe0","#dcce1f","#1eb0d8","#e84a98","#68e449","#5648e0","#dc8046","#45d8a8","#e34ae8","#bce449","#488ce0","#dc465e","#45d859","#8135e8","#e4b234","#33dee0","#dc33a9","#75d832","#354ae8","#e45334","#33e084","#b333dc","#cfd832","#20a3e8","#e42067","#2de01f","#481fdc","#d87d1e","#20e8c1","#e420d1","#95e01f","#1f5cdc","#d81e24","#4ae874","#9f49e4","#e0c848","#46c7dc","#d84599"];
 let fv7Avatar='🎮',fv7Accent='#00c9ff',fv7OpenChat=null,fv7ChatName='',fv7ReportContext=null,fv7OpenPublicUser=null;
 let fv7FriendsSnapshot={relationships:[],blocked:[]},fv7CommentsOpen=new Set(),fv7BusyCalls=new Set(),fv7ActiveReviewGame=null;
 const fv7Date=(v)=>{try{return new Date(v).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'});}catch{return 'Recently';}};
@@ -1111,5 +1111,321 @@ document.addEventListener('submit',async e=>{
    toast('Support case saved.');await fv8LoadRecoveryRequests();
   }catch(err){toast('Could not update case: '+err.message);}
   finally{btn.disabled=false;}
+ }
+});
+
+
+
+/* FluxVerse v9: customizable profiles, earned milestones, verified game achievements,
+   privacy exports, deletion requests and admin safety queue.
+   Requires 01_FLUXVERSE_V9.sql; no secrets or service-role keys in this script. */
+const fv9Defaults={theme:'neo',background:'nebula',frame:'glow',banner:'horizon',layout:'spotlight',accent:'original'};
+const fv9Presets={
+ neo:{theme:'neo',background:'nebula',frame:'glow',banner:'horizon',layout:'spotlight',accent:'original'},
+ modern:{theme:'modern',background:'grid',frame:'clean',banner:'circuit',layout:'spotlight',accent:'original'},
+ retro:{theme:'retro',background:'arcade',frame:'pixel',banner:'sunset',layout:'classic',accent:'original'},
+ steampunk:{theme:'steampunk',background:'brass',frame:'cog',banner:'clockwork',layout:'classic',accent:'original'}
+};
+let fv9LatestHub=null, fv9SavedStyle=null, fv9ReturnFocus=null;
+const fv9Safe = (v)=>esc(String(v??''));
+const fv9DisplayDate = (x)=>x?new Date(x).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'}):'Unknown';
+const fv9ThemeClass = (p)=>{
+ const style={...fv9Defaults,...(p||{})};
+ return `fv9-theme-${style.theme} fv9-bg-${style.background} fv9-frame-${style.frame} fv9-banner-${style.banner} fv9-layout-${style.layout}`;
+};
+
+/* 100 reproducible options in each of six categories. Artwork uses safe,
+   deterministic CSS gradients rather than remote files. */
+const fv9Families=['neo','modern','retro','steampunk'];
+const fv9FamilyLabels=['Future','Modern','Retro','Steampunk'];
+const fv9LibraryNouns=['Aurora','Midnight','Solar','Cobalt','Ember','Obsidian','Orbit','Mirage','Titan','Nimbus','Chrome','Vortex','Rift','Vector','Prism','Atlas','Static','Circuit','Lunar','Crystal','Copper','Velvet','Signal','Nebula','Horizon'];
+const fv9LibraryTypes=['looks','background','banner','frame','accent','layout'];
+const fv9Codes={background:'bg',banner:'bn',frame:'fr',accent:'ac',layout:'ly'};
+const fv9Code=(type,n)=>fv9Codes[type]+String(n).padStart(3,'0');
+const fv9Index=(value,prefix)=>{const match=String(value||'').match(new RegExp('^'+prefix+'(0[0-9]{2}|100)$'));const num=match?Number(match[1]):0;return num>=1&&num<=100?num:0;};
+const fv9Hue=(n,off=0)=>(Math.round((n*137.508+off)%360)+360)%360;
+const fv9Hsl=(h,s=78,l=45,a)=>`hsl(${((Math.round(h)%360)+360)%360} ${s}% ${l}%${a==null?'':' / '+a})`;
+function fv9ArtGradient(type,n){
+ const h=fv9Hue(n,type==='banner'?56:0),h2=(h+72+n*2)%360;
+ const dark=fv9Hsl(h,52,9),mid=fv9Hsl(h,72,25),light=fv9Hsl(h2,90,54);
+ switch(n%10){
+ case 0: return `radial-gradient(circle at 73% 38%,${fv9Hsl(h2,96,55,.75)},transparent 31%),linear-gradient(130deg,${dark},${mid})`;
+ case 1: return `repeating-linear-gradient(90deg,${fv9Hsl(h2,95,60,.16)} 0 2px,transparent 2px 27px),repeating-linear-gradient(0deg,${fv9Hsl(h,75,65,.13)} 0 2px,transparent 2px 27px),linear-gradient(135deg,${dark},${mid})`;
+ case 2: return `radial-gradient(ellipse at 38% 92%,${fv9Hsl(h2,95,62,.76)},transparent 56%),linear-gradient(15deg,${mid},${dark})`;
+ case 3: return `repeating-linear-gradient(137deg,transparent 0 20px,${fv9Hsl(h2,90,61,.21)} 21px 24px),linear-gradient(120deg,${dark},${mid})`;
+ case 4: return `repeating-radial-gradient(circle at 75% 60%,transparent 0 19px,${fv9Hsl(h2,94,65,.24)} 21px 25px,transparent 27px 43px),linear-gradient(130deg,${dark},${mid})`;
+ case 5: return `conic-gradient(from 33deg at 75% 25%,${mid},${dark},${light},${dark},${mid})`;
+ case 6: return `linear-gradient(150deg,transparent 36%,${fv9Hsl(h2,90,62,.24)} 37% 39%,transparent 40%),radial-gradient(ellipse at 12% 20%,${fv9Hsl(h2,88,60,.52)},transparent 55%),linear-gradient(140deg,${dark},${mid})`;
+ case 7: return `repeating-linear-gradient(0deg,${fv9Hsl(h,83,68,.07)} 0 5px,transparent 6px 14px),linear-gradient(125deg,${mid},${dark},${fv9Hsl(h2,65,24)})`;
+ case 8: return `radial-gradient(circle at 72% 40%,transparent 0 23px,${fv9Hsl(h2,84,62,.62)} 25px 29px,transparent 31px),repeating-radial-gradient(circle at 72% 40%,transparent 0 36px,${fv9Hsl(h,78,60,.21)} 39px 42px,transparent 44px 61px),linear-gradient(135deg,${dark},${mid})`;
+ default:return `linear-gradient(110deg,${dark} 9%,${mid} 50%,${fv9Hsl(h2,65,19)} 100%)`;
+ }
+}
+function fv9Palette(n){const h=fv9Hue(n);return [fv9Hsl(h,92,62),fv9Hsl(h+67,82,71)];}
+function fv9SetGeneratedStyle(el,s){
+ if(!el)return;
+ const bg=fv9Index(s.background,'bg'),bn=fv9Index(s.banner,'bn'),fr=fv9Index(s.frame,'fr'),ac=fv9Index(s.accent,'ac'),ly=fv9Index(s.layout,'ly');
+ el.classList.toggle('fv9-generated-banner',!!bn);
+ el.classList.toggle('fv9-generated-frame',!!fr);
+ if(bg)el.style.setProperty('--fv9-background',fv9ArtGradient('background',bg));else el.style.removeProperty('--fv9-background');
+ if(bn)el.style.setProperty('--fv9-banner-image',fv9ArtGradient('banner',bn));else el.style.removeProperty('--fv9-banner-image');
+ if(ac){const [a,b]=fv9Palette(ac);el.style.setProperty('--theme-accent',a);el.style.setProperty('--theme-secondary',b);}else{el.style.removeProperty('--theme-accent');el.style.removeProperty('--theme-secondary');}
+ const shape=fr?fr%10:0;
+ if(fr){el.style.setProperty('--fv9-ring-width',(2+(fr%5))+'px');el.style.setProperty('--fv9-ring-type',['solid','double','dashed','dotted','groove','ridge','solid','double','dashed','solid'][shape]);el.style.setProperty('--fv9-ring-radius',['50%','10px','0','20px','44%','4px','28px','0','35%','15px'][shape]);el.style.setProperty('--fv9-ring-shadow',shape%3===0?`0 0 ${9+(fr%6)*5}px var(--theme-accent)`:shape%3===1?'5px 5px var(--theme-secondary)':'inset 0 0 7px var(--theme-accent),0 0 12px #000a');}
+ else {for(const p of ['--fv9-ring-width','--fv9-ring-type','--fv9-ring-radius','--fv9-ring-shadow'])el.style.removeProperty(p);}
+ for(let i=0;i<10;i++)el.classList.toggle('fv9-layout-shape-'+i,!!ly&&ly%10===i);
+ if(ly){el.style.setProperty('--fv9-layout-gap',(10+(ly%10)*2)+'px');el.style.setProperty('--fv9-layout-radius',(3+(Math.floor((ly-1)/10)%10)*2)+'px');}
+ else {el.style.removeProperty('--fv9-layout-gap');el.style.removeProperty('--fv9-layout-radius');}
+}
+function fv9LibraryOptions(type){
+ return Array.from({length:100},(_,i)=>{
+  const n=i+1,family=fv9Families[i%4],label=fv9LibraryNouns[(i*3)%25]+' '+['Pulse','Voyage','District','Forge','Dream','Rise','Archive','Nights','Waves','Frontier'][(i*7)%10];
+  return {n,family,label:`${label} ${String(n).padStart(2,'0')}`,value:type==='looks'?'look'+String(n).padStart(3,'0'):fv9Code(type,n)};
+ });
+}
+const fv9Library={looks:fv9LibraryOptions('looks'),background:fv9LibraryOptions('background'),banner:fv9LibraryOptions('banner'),frame:fv9LibraryOptions('frame'),accent:fv9LibraryOptions('accent'),layout:fv9LibraryOptions('layout')};
+let fv9GalleryTab='looks',fv9GalleryPage=0;
+function fv9FancyLook(n){
+ const family=fv9Families[(n-1)%4];
+ return {theme:family,background:fv9Code('background',n),banner:fv9Code('banner',((n*17-1)%100)+1),frame:fv9Code('frame',((n*29-1)%100)+1),accent:fv9Code('accent',((n*37-1)%100)+1),layout:fv9Code('layout',n)};
+}
+function fv9GallerySwatch(type,n){
+ const look=type==='looks'?fv9FancyLook(n):null;
+ const art=(type==='background'||type==='looks')?fv9ArtGradient('background',n):type==='banner'?fv9ArtGradient('banner',n):`linear-gradient(145deg,#071928,#15293a)`;
+ const [a,b]=fv9Palette(type==='looks'?((n*37-1)%100)+1:n);
+ let glyph=type==='frame'?`<span class="fv9-swatch-ring" style="border-color:${a};border-width:${2+n%5}px;border-style:${['solid','double','dotted','dashed'][n%4]};border-radius:${n%3?'50%':'9px'};box-shadow:0 0 10px ${a}">★</span>`:type==='accent'?`<span class="fv9-swatch-color" style="background:linear-gradient(105deg,${a} 50%,${b} 50%)"></span>`:type==='layout'?'<span class="fv9-swatch-layout"><i></i><i></i><i></i></span>':'<span class="fv9-swatch-symbol">✦</span>';
+ return `<span class="fv9-choice-art" style="background:${art}">${glyph}</span>`;
+}
+function fv9GallerySelection(type,item,s){
+ if(type==='looks'){const p=fv9FancyLook(item.n);return ['theme','background','banner','frame','accent','layout'].every(k=>s[k]===p[k]);}
+ return s[type]===item.value;
+}
+function fv9RenderGallery(){
+ const host=$('fv9-gallery-grid');if(!host)return;
+ const search=($('fv9-gallery-search')?.value||'').trim().toLowerCase(),family=$('fv9-gallery-family')?.value||'all';
+ const list=fv9Library[fv9GalleryTab].filter(x=>(family==='all'||x.family===family)&&(!search||(x.label+' '+x.family+' '+x.n).toLowerCase().includes(search)));
+ const pages=Math.max(1,Math.ceil(list.length/12));fv9GalleryPage=Math.min(fv9GalleryPage,pages-1);
+ const visible=list.slice(fv9GalleryPage*12,fv9GalleryPage*12+12),s=fv9DraftStyle();
+ host.innerHTML=visible.map(x=>`<button type="button" class="fv9-choice ${fv9GallerySelection(fv9GalleryTab,x,s)?'is-selected':''}" data-fv9-choice="${x.n}" aria-pressed="${fv9GallerySelection(fv9GalleryTab,x,s)}" title="Preview ${fv9Safe(x.label)}">${fv9GallerySwatch(fv9GalleryTab,x.n)}<span class="fv9-choice-title">${fv9Safe(x.label)}</span><small>${fv9Safe(fv9FamilyLabels[fv9Families.indexOf(x.family)])} • ${String(x.n).padStart(3,'0')}</small></button>`).join('')||'<p class="fv9-no-matches">No designs found. Try another search or style.</p>';
+ $('fv9-gallery-count').textContent=list.length?`${fv9GalleryPage*12+1}–${Math.min(list.length,(fv9GalleryPage+1)*12)} of ${list.length}`:'0 of 0';
+ $('fv9-gallery-prev').disabled=fv9GalleryPage===0;$('fv9-gallery-next').disabled=fv9GalleryPage>=pages-1;
+ document.querySelectorAll('[data-fv9-gallery-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fv9GalleryTab===fv9GalleryTab)));
+}
+function fv9SetupLibrary(){
+ const lists={background:'bg',banner:'bn',frame:'fr',accent:'ac',layout:'ly'};
+ for(const [type,prefix] of Object.entries(lists)){
+  const el=$('fv9-'+type);if(!el||el.querySelector('[data-fv9-generated]'))continue;
+  const fragment=document.createDocumentFragment();
+  for(const item of fv9Library[type]){const option=document.createElement('option');option.value=item.value;option.textContent=`${String(item.n).padStart(3,'0')} · ${item.label}`;option.dataset.fv9Generated='';fragment.appendChild(option);}
+  el.appendChild(fragment);
+ }
+ fv9RenderGallery();
+}
+function fv9DraftStyle(){
+ const s={};for(const key of ['theme','background','frame','banner','layout','accent'])s[key]=$('fv9-'+key)?.value||fv9Defaults[key];
+ s.favorite_game=$('fv9-favorite')?.value.trim()||'';
+ s.player_status=$('fv9-status-text')?.value.trim()||'';
+ return s;
+}
+function fv9FillStyle(style){
+ const s={...fv9Defaults,...(style||{})};
+ for(const key of ['theme','background','frame','banner','layout','accent'])if($('fv9-'+key))$('fv9-'+key).value=s[key]||fv9Defaults[key];
+ if($('fv9-favorite'))$('fv9-favorite').value=s.favorite_game||'';
+ if($('fv9-status-text'))$('fv9-status-text').value=s.player_status||'';
+ fv9ApplyTheme();
+}
+function fv9PreviewBadges(badges){
+ return (badges||[]).slice(0,5).map(b=>`<span>${fv9Safe(b.icon||'🏅')} ${fv9Safe(b.title)}</span>`).join('')||'<span>No badges earned yet</span>';
+}
+function fv9PreviewAchievements(items){
+ return (items||[]).slice(0,4).map(a=>`<span>${fv9Safe(a.icon||'🏆')} ${fv9Safe(a.title)}</span>`).join('')||'<span>No game achievements yet</span>';
+}
+function fv9RefreshFullscreen(){
+ const host=$('fv9-fullscreen-card'),card=$('fv9-live-preview');if(!host||!card)return;
+ const duplicate=card.cloneNode(true);duplicate.removeAttribute('id');duplicate.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+ host.replaceChildren(duplicate);
+}
+function fv9CloseFullscreen(){
+ const modal=$('fv9-fullscreen-modal');if(!modal||modal.classList.contains('hidden'))return;
+ modal.classList.add('hidden');modal.setAttribute('aria-hidden','true');
+ if(fv9ReturnFocus?.isConnected)fv9ReturnFocus.focus();
+}
+function fv9ApplyTheme(){
+ const card=$('fv9-live-preview');if(!card)return;
+ const s=fv9DraftStyle();card.className='fv9-live-preview fv9-profile-render '+fv9ThemeClass(s);fv9SetGeneratedStyle(card,s);
+ const avatar=$('fv9-preview-avatar');avatar.textContent=fv7Icon(fv7Avatar||profile?.avatar_icon);
+ const name=$('fv7-display')?.value.trim()||profile?.display_name||profile?.username||'Your FluxVerse profile';
+ $('fv9-preview-name').textContent=name;
+ $('fv9-preview-handle').textContent='@'+($('fv7-username')?.value.trim()||profile?.username||'player');
+ $('fv9-preview-bio').textContent=$('fv7-bio')?.value.trim()||profile?.bio||'Tell players about yourself.';
+ $('fv9-preview-favorite').textContent=s.favorite_game||'Choose a favorite game';
+ $('fv9-preview-status').textContent=s.player_status||'Ready to play';
+ $('fv9-preview-joined').textContent=fv9LatestHub?.joined_at?fv9DisplayDate(fv9LatestHub.joined_at):'FluxVerse member';
+ $('fv9-preview-badges').innerHTML=fv9PreviewBadges(fv9LatestHub?.badges);
+ $('fv9-preview-achievements').innerHTML=fv9PreviewAchievements(fv9LatestHub?.game_achievements);
+ document.querySelectorAll('[data-fv9-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fv9Preset===s.theme)));
+ const saved=fv9SavedStyle?{...fv9Defaults,...fv9SavedStyle}:null;
+ const changed=Boolean(saved)&&['theme','background','frame','banner','layout','accent','favorite_game','player_status'].some(key=>(s[key]||'')!==(saved[key]||''));
+ const state=$('fv9-preview-state');if(state){state.textContent=changed?'Unsaved preview — only you can see these changes.':'You are viewing your saved profile design.';state.classList.toggle('is-dirty',changed);}
+ if($('fv9-save-style'))$('fv9-save-style').disabled=!changed;
+ if($('fv9-discard-style'))$('fv9-discard-style').disabled=!changed;
+ fv9RefreshFullscreen();fv9RenderGallery();
+}
+async function fv9LoadHub(){
+ if(!user||!$('fv9-style-form'))return;
+ try{
+  const data=await fv7Rpc('fv9_my_hub');
+  if(!user)return;fv9LatestHub=data;
+  const style={...fv9Defaults,...(data?.style||{})};
+  fv9SavedStyle={...style};fv9SetupLibrary();fv9FillStyle(style);
+  if($('fv9-style-message'))$('fv9-style-message').textContent='Profile design loaded. Try a new look — changes are private until you save.';
+  $('fv9-account-since').textContent=`FluxVerse member since ${fv9DisplayDate(data.joined_at)} · ${data.years||0} complete year(s) · anniversary badges unlock automatically.`;
+  $('fv9-badges').innerHTML=(data.badges||[]).map(b=>`<div class="fv9-award"><span>${fv9Safe(b.icon||'🏅')}</span><div><strong>${fv9Safe(b.title)}</strong><small>${fv9Safe(b.detail||'Earned on FluxVerse')}</small></div></div>`).join('')||'<p class="muted">No badges yet.</p>';
+  $('fv9-game-achievements').innerHTML=(data.game_achievements||[]).map(a=>`<div class="fv9-award"><span>${fv9Safe(a.icon||'🏆')}</span><div><strong>${fv9Safe(a.title)}</strong><small>${fv9Safe(a.game)} · ${fv9DisplayDate(a.awarded_at)}</small><p>${fv9Safe(a.description||'')}</p></div></div>`).join('')||'<p class="muted">No verified game achievements yet. They appear when a trusted game system or administrator confirms an achievement.</p>';
+  fv9ApplyTheme();
+  const del=await fv7Rpc('fv9_my_deletion_status');
+  $('fv9-delete-message').textContent=del?.status==='pending'||del?.status==='reviewing'?'Deletion request pending. Your account still exists.':'';
+  $('fv9-delete-cancel').classList.toggle('hidden',!['pending','reviewing'].includes(del?.status));
+ }catch(err){$('fv9-style-message').textContent=`Account features unavailable: ${err.message}. The v9 database installation may be missing.`;}
+}
+async function fv9RefreshModerator(){
+ const panel=$('fv9-admin-moderation');if(!panel||!user)return;
+ try{
+  const role=await fv7Rpc('is_fluxverse_admin');
+  if(role!==true){panel.classList.add('hidden');return;}
+  panel.classList.remove('hidden');
+  const [data,reports]=await Promise.all([fv7Rpc('fv9_admin_safety_queue'),fv7Rpc('fv_social_admin_reports')]);
+  $('fv9-deletion-queue').innerHTML=(data?.deletion_requests||[]).map(r=>`<div class="fv9-admin-row"><b>@${fv9Safe(r.username)}</b><small>Player ID: <code>${fv9Safe(r.user_id)}</code></small><small>Requested: ${fv9DisplayDate(r.requested_at)}</small><p>${fv9Safe(r.reason||'No reason given')}</p><span class="fv9-pill">${fv9Safe(r.status)}</span><p class="fv9-fineprint">Verify account ownership and follow your manual deletion procedure. Never delete another player's account from this browser.</p></div>`).join('')||'<p class="muted">No pending account-deletion requests.</p>';
+  $('fv9-report-queue').innerHTML=(reports||[]).map(r=>`<div class="fv9-admin-row"><b>${fv9Safe(r.target_kind)} · ${fv9Safe(r.status)}</b><p>${fv9Safe(r.reason)}</p><small>Target ID: <code>${fv9Safe(r.target_id)}</code></small><div class="fv9-actions">${['post','comment'].includes(r.target_kind)?`<button type="button" data-fv9-remove="${fv9Safe(r.target_kind)}" data-target="${fv9Safe(r.target_id)}" data-report="${fv9Safe(r.id)}" class="outline fv9-danger">Remove content</button>`:''}<button type="button" class="outline" data-fv9-report="reviewed" data-report="${fv9Safe(r.id)}">Reviewed</button><button type="button" class="outline" data-fv9-report="dismissed" data-report="${fv9Safe(r.id)}">Dismiss</button></div></div>`).join('')||'<p class="muted">No reports to review.</p>';
+  $('fv9-moderation-log').innerHTML=(data?.moderation_log||[]).map(x=>`<div class="fv9-admin-row"><b>${fv9Safe(x.action)}</b> · ${fv9Safe(x.target_id)}<p>${fv9Safe(x.reason)}</p><small>${fv9DisplayDate(x.created_at)}</small></div>`).join('')||'<p class="muted">No moderation actions logged yet.</p>';
+ }catch(err){panel.classList.remove('hidden');$('fv9-admin-message').textContent=`Safety queue unavailable: ${err.message}`;}
+}
+const fv9OriginalPage = page;
+page=function(name){fv9OriginalPage(name);if(name==='profile'&&user)fv9LoadHub();if(name==='help'&&user)fv9RefreshModerator();};
+const fv9OriginalPublicProfile = fv7PublicProfile;
+fv7PublicProfile=async function(id){
+ await fv9OriginalPublicProfile(id);
+ if(fv7OpenPublicUser!==id||!db)return;
+ try{
+  const data=await fv7Rpc('fv9_public_showcase',{p_user:id});
+  if(!data||fv7OpenPublicUser!==id)return;
+  const el=$('fv7-public-content');if(!el)return;
+  const name=el.querySelector('#fv7-public-title')?.textContent||'FluxVerse player';
+  const root=el.querySelector('.fv7-profile-public');
+  const bio=root?.querySelector(':scope > p')?.textContent||'This player has not added a bio yet.';
+  const handle=el.querySelector('.fv7-public-identity p')?.textContent||'';
+  const panel=document.createElement('div');panel.className='fv9-public-showcase fv9-profile-render '+fv9ThemeClass(data.style);fv9SetGeneratedStyle(panel,{...fv9Defaults,...(data.style||{})});
+  const avatar=el.querySelector('.fv7-public-identity')?.querySelector('span')?.textContent||'🎮';
+  const favorite=data.style?.favorite_game||'No favorite game selected';
+  const status=data.style?.player_status||'Exploring FluxVerse';
+  panel.innerHTML=`<div class="fv9-render-cover"><span class="fv9-render-label">FLUXVERSE • PLAYER PROFILE</span><span class="fv9-render-art">✧</span></div>
+   <div class="fv9-render-inner"><div class="fv9-render-identity"><span class="fv9-render-avatar">${fv9Safe(avatar)}</span><div><h3>${fv9Safe(name)}</h3><small>${fv9Safe(handle)}</small><p>${fv9Safe(status)}</p></div></div>
+    <div class="fv9-render-body"><div class="fv9-render-primary"><h4>About me</h4><p>${fv9Safe(bio)}</p><h4>Favorite game</h4><p>${fv9Safe(favorite)}</p><div class="fv9-render-stat"><span>Account anniversary</span><strong>${Number(data.anniversary_years)||0} complete year(s)</strong></div></div>
+    <div class="fv9-render-showcase"><h4>Badge showcase</h4><div class="fv9-render-icons">${fv9PreviewBadges(data.badges)}</div><h4>Verified achievements (${Number(data.game_achievement_count)||0})</h4><div class="fv9-render-icons">${fv9PreviewAchievements(data.game_achievements)}</div></div></div></div>`;
+  if(root){root.classList.add('fv9-styled-public');root.insertBefore(panel,root.firstChild);}else{el.append(panel);}
+ }catch(err){/* Existing public profiles still work if v9 is unavailable. */}
+};
+const fv9OriginalOpenGame = fvOpenGame;
+fvOpenGame=async function(id,opts={}){
+ await fv9OriginalOpenGame(id,opts);
+ if(fvOpenGameId!==String(id)||!db)return;
+ try{
+  const list=await fv7Rpc('fv9_game_achievement_catalog',{p_game_id:String(id)});
+  if(fvOpenGameId!==String(id))return;
+  const el=$('fv-game-detail-content');if(!el)return;
+  const section=document.createElement('section');section.className='fv9-game-catalog';
+  section.innerHTML=`<h3>Game achievements</h3><p class="muted">These are developer-defined achievements. Unlocks require a trusted verification system.</p><div class="fv9-badge-grid">${(list||[]).map(a=>`<div class="fv9-award"><span>${fv9Safe(a.icon||'🏆')}</span><div><strong>${fv9Safe(a.title)}</strong><small>${fv9Safe(a.description)}</small></div></div>`).join('')||'<p class="muted">This game has no achievements yet.</p>'}</div>`;
+  el.append(section);
+ }catch(err){/* Games stay usable if v9 has not been installed yet. */}
+};
+
+document.addEventListener('change',e=>{if(e.target.closest('#fv9-style-form'))fv9ApplyTheme();if(e.target.id==='fv9-gallery-family'){fv9GalleryPage=0;fv9RenderGallery();}});
+if($('fv9-gallery-search'))$('fv9-gallery-search').addEventListener('input',()=>{fv9GalleryPage=0;fv9RenderGallery();});
+document.addEventListener('input',e=>{
+ if(e.target.closest('#fv9-style-form')||['fv7-display','fv7-username','fv7-bio'].includes(e.target.id))fv9ApplyTheme();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')fv9CloseFullscreen();});
+document.addEventListener('click',async e=>{
+ const tab=e.target.closest('[data-fv9-gallery-tab]');if(tab){fv9GalleryTab=tab.dataset.fv9GalleryTab;fv9GalleryPage=0;$('fv9-gallery-search').value='';fv9RenderGallery();return;}
+ if(e.target.closest('#fv9-gallery-prev')){fv9GalleryPage=Math.max(0,fv9GalleryPage-1);fv9RenderGallery();return;}
+ if(e.target.closest('#fv9-gallery-next')){fv9GalleryPage+=1;fv9RenderGallery();return;}
+ const choice=e.target.closest('[data-fv9-choice]');if(choice){
+  const n=Number(choice.dataset.fv9Choice);if(n<1||n>100)return;
+  if(fv9GalleryTab==='looks'){for(const [key,value] of Object.entries(fv9FancyLook(n)))$('fv9-'+key).value=value;}
+  else $('fv9-'+fv9GalleryTab).value=fv9Code(fv9GalleryTab,n);
+  fv9ApplyTheme();return;
+ }
+ const preset=e.target.closest('[data-fv9-preset]');
+ if(preset){
+  const choices=fv9Presets[preset.dataset.fv9Preset];if(choices){for(const [key,val] of Object.entries(choices))if($('fv9-'+key))$('fv9-'+key).value=val;fv9ApplyTheme();}
+  return;
+ }
+ if(e.target.closest('#fv9-discard-style')){if(fv9SavedStyle){fv9FillStyle(fv9SavedStyle);$('fv9-style-message').textContent='Changes discarded. Your public profile is unchanged.';}return;}
+ if(e.target.closest('#fv9-full-preview')){
+  const modal=$('fv9-fullscreen-modal');if(!modal)return;
+  fv9ReturnFocus=document.activeElement;fv9RefreshFullscreen();modal.classList.remove('hidden');modal.setAttribute('aria-hidden','false');$('fv9-close-preview').focus();return;
+ }
+ if(e.target.closest('#fv9-close-preview')||e.target.id==='fv9-fullscreen-modal'){fv9CloseFullscreen();return;}
+ if(e.target.closest('[data-fv7-avatar]')||e.target.closest('[data-fv7-accent]')){queueMicrotask(fv9ApplyTheme);}
+ if(e.target.closest('#fv9-refresh-badges')){fv9LoadHub();return;}
+ if(e.target.closest('#fv9-moderation-refresh')){fv9RefreshModerator();return;}
+ if(e.target.closest('#fv9-delete-cancel')){
+  if(!confirm('Cancel your pending account deletion request?'))return;
+  fv7Guard('fv9-cancel-deletion',async()=>{await fv7Rpc('fv9_cancel_deletion');await fv9LoadHub();toast('Deletion request cancelled.');});return;
+ }
+ if(e.target.closest('#fv9-data-export')){
+  if(!fv7Require())return;
+  fv7Guard('fv9-export',async()=>{
+   const json=await fv7Rpc('fv9_export_my_data');
+   const url=URL.createObjectURL(new Blob([JSON.stringify(json,null,2)],{type:'application/json'}));
+   const a=document.createElement('a');a.href=url;a.download='FluxVerse-my-data-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
+   toast('Your data snapshot was downloaded. Keep it private.');
+  });return;
+ }
+ const remove=e.target.closest('[data-fv9-remove]');if(remove){
+  const kind=remove.dataset.fv9Remove,id=remove.dataset.target,reportId=remove.dataset.report;
+  if(!confirm(`Remove this ${kind} permanently? Check the reported content before continuing.`))return;
+  const reason=prompt('Reason for removal (3–500 characters):');if(reason===null)return;
+  fv7Guard('fv9-mod',async()=>{const ok=await fv7Rpc('fv9_admin_remove_content',{p_kind:kind,p_target:id,p_reason:reason});
+   if(!ok)throw Error('Content not found or already removed.');
+   if(reportId)await fv7Rpc('fv_social_admin_review_report',{p_id:reportId,p_status:'reviewed'});
+   toast('Content removed and action logged.');await fv9RefreshModerator();
+  });return;
+ }
+ const report=e.target.closest('[data-fv9-report]');if(report){
+  fv7Guard('fv9-report',async()=>{await fv7Rpc('fv_social_admin_review_report',{p_id:report.dataset.report,p_status:report.dataset.fv9Report});await fv9RefreshModerator();});return;
+ }
+});
+document.addEventListener('submit',e=>{
+ const form=e.target;
+ if(form.id==='fv9-style-form'){
+  e.preventDefault();if(!fv7Require())return;
+  fv7Guard('fv9-style',async()=>{
+   await fv7Rpc('fv9_save_style',{p_theme:$('fv9-theme').value,p_background:$('fv9-background').value,
+    p_frame:$('fv9-frame').value,p_banner:$('fv9-banner').value,p_layout:$('fv9-layout').value,p_accent:$('fv9-accent').value,
+    p_favorite_game:$('fv9-favorite').value.trim(),p_player_status:$('fv9-status-text').value.trim()});
+   await fv9LoadHub();$('fv9-style-message').textContent='Saved! Your public profile design is updated.';toast('Profile design saved.');
+  });return;
+ }
+ if(form.id==='fv9-delete-form'){
+  e.preventDefault();if(!fv7Require())return;
+  if($('fv9-delete-confirm').value!=='DELETE'){toast('Type DELETE exactly to confirm.');return;}
+  if(!confirm('Submit a permanent account deletion request? This does not instantly delete your account.'))return;
+  fv7Guard('fv9-delete',async()=>{
+   const result=await fv7Rpc('fv9_request_deletion',{p_confirmation:'DELETE',p_reason:$('fv9-delete-reason').value.trim()});
+   $('fv9-delete-confirm').value='';$('fv9-delete-message').textContent=result?.message||'Deletion request submitted.';await fv9LoadHub();toast('Deletion request sent to FluxVerse staff.');
+  });return;
+ }
+ const api = async(name,args,success)=>fv7Guard('fv9-admin-submit',async()=>{
+  await fv7Rpc(name,args);$('fv9-admin-message').textContent=success;form.reset();await fv9RefreshModerator();toast(success);
+ });
+ if(form.id==='fv9-achievement-create'){
+  e.preventDefault();const f=form.elements;api('fv9_admin_create_game_achievement',{p_game_id:f.game.value.trim(),p_code:f.code.value.trim(),p_title:f.title.value.trim(),p_description:f.description.value.trim(),p_icon:f.icon.value||'🏆'},'Achievement definition created.');return;
+ }
+ if(form.id==='fv9-achievement-award'){
+  e.preventDefault();const f=form.elements;api('fv9_admin_award_game_achievement',{p_player:f.player.value.trim(),p_achievement:f.achievement.value.trim()},'Verified achievement awarded.');return;
+ }
+ if(form.id==='fv9-badge-grant'){
+  e.preventDefault();const f=form.elements;api('fv9_admin_grant_badge',{p_player:f.player.value.trim(),p_badge:f.badge.value},'Special badge granted.');return;
  }
 });

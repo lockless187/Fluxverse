@@ -230,11 +230,11 @@ footer .fv-legal-links a:hover,footer .fv-legal-links a:focus-visible {color:#ff
   <div class="dev-stats" id="developer-stats" aria-live="polite"><div class="dev-metric"><b>—</b><span>Loading stats…</span></div></div>
   <div class="panel">
    <div class="section-title"><div><small>SUBMIT A NEW GAME</small><h2>Upload a release</h2></div><span class="status-pill approved">Approved developer</span></div>
-   <p class="muted">Submit your own PC game for human review. A cover image and Windows ZIP build are required for approval. ZIP builds are private; only admins and entitled players can download them. Supabase allows 45 MB ZIPs in this setup, or up to 500 MB once the optional Cloudflare R2 Worker is connected.</p>
+   <p class="muted">Submit your own PC game for human review. A cover image and Windows ZIP build are required. Private ZIP builds need a successful release check and administrator review before free games appear in the Store. Uploads up to 45 MB use Supabase. Larger uploads require separately configured Cloudflare R2.</p>
    <form id="developer-game-form" class="dev-form two-col">
     <label>Game title<input id="submission-title" maxlength="100" required placeholder="Your game name"></label>
     <label>Genre<input id="submission-genre" maxlength="40" required placeholder="Action, RPG, Strategy…"></label>
-    <label>Price (CAD)<input id="submission-price" type="number" min="0" max="9999" step="0.01" value="0" required></label>
+    <label>Price (CAD) — free-game launch<input id="submission-price" type="number" min="0" max="0" step="0.01" value="0" readonly required></label>
     <label>Release version<input id="submission-version" maxlength="30" placeholder="1.0.0" value="1.0.0" required></label>
     <label>Supported OS<select id="submission-os"><option>Windows</option><option>Windows + Linux</option><option>Windows + macOS</option><option>Windows + Linux + macOS</option></select></label>
     <label>Game trailer URL (optional)<input id="submission-trailer" type="url" maxlength="500" placeholder="https://your-trailer-link"></label>
@@ -246,7 +246,7 @@ footer .fv-legal-links a:hover,footer .fv-legal-links a:focus-visible {color:#ff
     <label class="dev-file-field full-field">Screenshots · optional, up to 3 images<input id="submission-shots" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple></label>
     <label class="check-label full-field"><input id="submission-cards" type="checkbox"> This game may support collectible cards in a future release</label>
     <label class="check-label full-field"><input id="submission-rights" type="checkbox" required> I own or have permission to distribute this game and all included artwork/files.</label>
-    <p class="muted full-field">Paid games can be approved as listings, but checkout and paid downloads stay disabled until payments and developer payouts are implemented. Never upload passwords, secret keys or unlicensed games.</p>
+    <p class="muted full-field">This first release accepts free games only. Paid checkout and payouts are not available. After uploading, use Check release, then an administrator must inspect and scan the build before publishing. Never upload passwords, secrets or unlicensed games.</p>
     <button id="developer-submit" class="primary full-field" type="submit">Submit game + upload files →</button>
     <p id="developer-upload-status" class="full-field dev-progress" role="status" aria-live="polite"></p>
    </form>

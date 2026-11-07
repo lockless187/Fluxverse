@@ -15,92 +15,98 @@ footer .fv-legal-links a:hover,footer .fv-legal-links a:focus-visible {color:#ff
 @media(max-width:800px){footer .fv-legal-links {width:100%;order:2}footer {gap:10px;flex-wrap:wrap}}
 </style>
 <style id="cv-season-only">
-/* Cryptic Verse seasonal appearance only. No dimensions, display states or navigation are changed. */
+/* Cryptic Verse v10: background-only season skins. Never change layout / real games. */
+html[data-cv-season="spring"]{--cv-scene:url("assets/cv-spring-scene.webp");--cv-base:#0c1315;--cv-glow:#f6a7ca}
+html[data-cv-season="summer"]{--cv-scene:url("assets/cv-summer-scene.webp");--cv-base:#071c20;--cv-glow:#ffe08d}
+html[data-cv-season="autumn"]{--cv-scene:url("assets/cv-autumn-scene.webp");--cv-base:#1a0a07;--cv-glow:#ffab4a}
+html[data-cv-season="winter"]{--cv-scene:url("assets/cv-winter-scene.webp");--cv-base:#08172a;--cv-glow:#a4e9ff}
+html[data-cv-christmas="true"]{--cv-scene:url("assets/cv-christmas-scene.webp");--cv-base:#091627;--cv-glow:#ffe6ad}
+/* Preserve the previously tested long brand name and hero heading sizing. */
 .fx-brand .fx-brand-word.cv-brand-word{font-size:23px!important;line-height:1!important;letter-spacing:-.95px!important}
 .fx-brand .fx-brand-word.cv-brand-word span{color:#ff9b21!important}
 @media(max-width:1180px){.fx-brand .fx-brand-word.cv-brand-word{font-size:21px!important}}
 @media(max-width:600px){.fx-brand .fx-brand-word.cv-brand-word{font-size:19px!important}}
 .fx-showcase-copy h1{font-size:clamp(33px,4.1vw,63px)!important;letter-spacing:-2px}
 @media(max-width:600px){.fx-showcase-copy h1{font-size:clamp(28px,8vw,47px)!important;letter-spacing:-1.2px}}
-/* Seasonal color grades: the existing art and hero placement stay exactly where they were. */
-html[data-cv-season="spring"]{--cv-filter:grayscale(.45) sepia(.5) saturate(1.55) hue-rotate(285deg) brightness(1.09);--cv-glow:#ed89ca;--cv-tint:rgba(129,49,91,.23)}
-html[data-cv-season="summer"]{--cv-filter:grayscale(.48) sepia(.75) saturate(1.95) hue-rotate(19deg) brightness(1.14);--cv-glow:#f0d37b;--cv-tint:rgba(19,113,124,.20)}
-html[data-cv-season="autumn"]{--cv-filter:grayscale(.78) sepia(1) saturate(2.5) hue-rotate(-24deg) contrast(1.12);--cv-glow:#fda44a;--cv-tint:rgba(144,51,8,.12)}
-html[data-cv-season="winter"]{--cv-filter:grayscale(.68) sepia(.55) saturate(2.7) hue-rotate(152deg) brightness(.97) contrast(1.08);--cv-glow:#a5dffe;--cv-tint:rgba(21,94,154,.30)}
-html[data-cv-season] .fx-showcase::before,html[data-cv-season] .fx-store-body::before{filter:var(--cv-filter)!important}
-html[data-cv-season] .fx-showcase::after{
- background:linear-gradient(90deg,#11090eee 0%,#11090ea8 30%,#11090e20 64%,#11090e04 100%),linear-gradient(155deg,transparent 20%,var(--cv-tint) 90%)!important;
+/* Preserve all dimensions, positions, form controls, and menu styles. */
+html[data-cv-season] .fx-showcase::before{
+ background-image:var(--cv-scene)!important;
+ background-size:cover!important;
+ background-position:center 45%!important;
+ background-repeat:no-repeat!important;
+ filter:none!important;
+ opacity:1!important;
 }
-html[data-cv-season] .fx-empty-content{border-left-color:var(--cv-glow)!important}
+html[data-cv-season] .fx-showcase::after{
+ background:linear-gradient(90deg,rgba(9,5,8,.70) 0%,rgba(9,5,8,.47) 31%,rgba(9,5,8,.12) 65%,rgba(9,5,8,0) 100%)!important;
+}
+html[data-cv-season] .fx-store-body{background:var(--cv-base)!important}
+html[data-cv-season] .fx-store-body::before{
+ background-image:linear-gradient(180deg,rgba(7,7,10,.37) 0%,rgba(7,7,10,.19) 52%,var(--cv-base) 100%),var(--cv-scene)!important;
+ background-size:cover,cover!important;
+ background-position:center top,center top!important;
+ background-repeat:no-repeat!important;
+ filter:none!important;
+ opacity:1!important;
+}
 html[data-cv-season] .fx-showcase{isolation:isolate}
 html[data-cv-season] .fx-showcase-copy{z-index:4!important}
-.cv-season-decor{position:absolute;inset:0;z-index:3;overflow:hidden;pointer-events:none;border-radius:inherit}
-.cv-season-piece{position:absolute;top:-35px;font-size:var(--cv-size,14px);opacity:.72;line-height:1;animation:cv-season-fall var(--cv-duration,13s) linear var(--cv-delay,0s) infinite;filter:drop-shadow(0 0 3px var(--cv-glow))}
-@keyframes cv-season-fall{0%{transform:translate3d(0,-30px,0) rotate(0deg);opacity:0}12%{opacity:.7}88%{opacity:.65}100%{transform:translate3d(var(--cv-drift,30px),330px,0) rotate(260deg);opacity:0}}
-/* December 24–25: extra festive lights, a wreath and a small seasonal tag in the existing hero. */
-html[data-cv-christmas="true"] .fx-showcase::after{
- background:linear-gradient(90deg,#081421eb 0%,#091622aa 30%,#09162227 70%,#132b2b08 100%),
- radial-gradient(ellipse at 68% 14%,rgba(248,219,125,.18),transparent 42%),
- linear-gradient(145deg,rgba(24,94,71,.25),rgba(158,32,49,.22))!important
-}
-html[data-cv-christmas="true"] .fx-showcase{box-shadow:inset 0 0 0 1px #ffcb735c,0 0 28px rgba(247,184,84,.16)!important}
-html[data-cv-christmas="true"] .cv-season-decor:before{content:"";display:block;position:absolute;left:0;right:0;top:0;height:7px;
- background:radial-gradient(circle at center,#ffeaae 0 3px,transparent 4px) 0 0/49px 7px repeat-x;
- filter:drop-shadow(0 0 5px #ffdc91);opacity:.95}
-.cv-xmas-label{display:none;position:absolute;right:12px;bottom:12px;z-index:3;pointer-events:none;color:#ffe7b4;border:1px solid #fbc47996;
- border-radius:16px;background:#182a2bbb;backdrop-filter:blur(4px);padding:7px 12px;font:700 11px 'DM Sans',sans-serif;letter-spacing:.35px;text-shadow:0 1px 4px #001}
+html[data-cv-season] .fx-empty-content{border-left-color:var(--cv-glow)!important}
+/* Transparent, noninteractive ornaments layered over existing hero only. */
+.cv-season-decor{position:absolute;inset:0;overflow:hidden;z-index:3;pointer-events:none;border-radius:inherit}
+.cv-season-piece{position:absolute;top:-35px;font-size:var(--cv-size,17px);opacity:.78;line-height:1;animation:cv-season-fall var(--cv-duration,14s) linear var(--cv-delay,0s) infinite;filter:drop-shadow(0 0 5px var(--cv-glow))}
+@keyframes cv-season-fall{0%{transform:translate3d(0,-36px,0) rotate(0deg);opacity:0}12%{opacity:.83}87%{opacity:.63}100%{transform:translate3d(var(--cv-drift,30px),340px,0) rotate(270deg);opacity:0}}
+/* Special Christmas-only decorations December 24–25, Regina time. */
+html[data-cv-christmas="true"] .fx-showcase{box-shadow:inset 0 0 0 1px #ffcb735c,0 0 25px #e4a34635!important}
+html[data-cv-christmas="true"] .cv-season-decor:before{content:"";display:block;position:absolute;left:0;right:0;top:0;height:9px;background:radial-gradient(circle at center,#ffeaae 0 3px,transparent 4px) 0 0/48px 9px repeat-x;filter:drop-shadow(0 0 6px #ffe7ac)}
+.cv-xmas-label{display:none;position:absolute;right:12px;bottom:10px;z-index:3;pointer-events:none;color:#fff0c5;border:1px solid #fbc47996;border-radius:16px;background:#142a28dd;backdrop-filter:blur(4px);padding:7px 12px;font:700 11px 'DM Sans',sans-serif;letter-spacing:.35px;text-shadow:0 1px 4px #001}
 html[data-cv-christmas="true"] .cv-xmas-label{display:block}
-@media(max-width:700px){.cv-xmas-label{font-size:9px;padding:5px 8px;right:7px;bottom:5px}.cv-season-piece:nth-child(n+12){display:none}}
+@media(max-width:700px){.cv-xmas-label{font-size:9px;padding:5px 8px;right:6px;bottom:4px}.cv-season-piece:nth-child(n+12){display:none}}
 @media(prefers-reduced-motion:reduce){.cv-season-piece{display:none!important}}
 </style>
 <script id="cv-season-calendar">
-/* Canada/Saskatchewan calendar (no geolocation or external service). */
+/* Automatic Canadian (Saskatchewan) seasons; previews only via ?cvSeason=spring etc. */
 (function(){
-  'use strict';
-  const ZONE='America/Regina';
-  let last='';
-  const SYMBOLS={spring:['✿','❀','✾'],summer:['✦','✧','☀'],autumn:['🍁','✦','🍂'],winter:['❄','✧','❅']};
-  function dateParts(){
-    try {
-      const parts=new Intl.DateTimeFormat('en-CA',{timeZone:ZONE,year:'numeric',month:'numeric',day:'numeric'}).formatToParts(new Date());
-      const get=k=>Number(parts.find(p=>p.type===k).value);
-      return {month:get('month'),day:get('day')};
-    } catch(_){const d=new Date();return {month:d.getMonth()+1,day:d.getDate()};}
+ 'use strict';
+ const ZONE='America/Regina';
+ const SYMBOLS={spring:['✿','❀','✾'],summer:['☀','✦','✧'],autumn:['🍁','🍂','✦'],winter:['❄','❅','✧'],christmas:['❄','🎄','✦']};
+ const OVERRIDES=['spring','summer','autumn','winter','christmas'];
+ let last='';
+ function currentParts(){
+  try{
+   const parts=new Intl.DateTimeFormat('en-CA',{timeZone:ZONE,month:'numeric',day:'numeric'}).formatToParts(new Date());
+   return {m:Number(parts.find(p=>p.type==='month').value),d:Number(parts.find(p=>p.type==='day').value)};
+  }catch(e){const d=new Date();return {m:d.getMonth()+1,d:d.getDate()};}
+ }
+ function seasonFor(m){return m>=3&&m<=5?'spring':m>=6&&m<=8?'summer':m>=9&&m<=11?'autumn':'winter';}
+ function getTheme(){
+  const p=currentParts();
+  const override=new URLSearchParams(location.search).get('cvSeason');
+  if(OVERRIDES.includes(override))return {s:override==='christmas'?'winter':override,x:override==='christmas'};
+  return {s:seasonFor(p.m),x:p.m===12&&(p.d===24||p.d===25)};
+ }
+ function showDecor(s,x){
+  const hero=document.getElementById('store-hero');if(!hero)return;
+  let wrap=hero.querySelector('.cv-season-decor');
+  if(!wrap){wrap=document.createElement('div');wrap.className='cv-season-decor';wrap.setAttribute('aria-hidden','true');hero.appendChild(wrap);}
+  wrap.replaceChildren();
+  const syms=SYMBOLS[x?'christmas':s];
+  for(let i=0;i<19;i++){
+   const el=document.createElement('span');el.className='cv-season-piece';el.textContent=syms[i%syms.length];
+   el.style.left=(2+(i*43)%94)+'%';el.style.setProperty('--cv-size',(12+(i*7)%12)+'px');
+   el.style.setProperty('--cv-duration',(10+(i*3)%11)+'s');el.style.setProperty('--cv-delay',(-1.71*i)+'s');
+   el.style.setProperty('--cv-drift',(((i*17)%90)-45)+'px');wrap.appendChild(el);
   }
-  function seasonFor(month){return month>=3&&month<=5?'spring':month>=6&&month<=8?'summer':month>=9&&month<=11?'autumn':'winter';}
-  function refreshDecor(season,isChristmas){
-    const hero=document.getElementById('store-hero');
-    if(!hero)return;
-    let decor=hero.querySelector('.cv-season-decor');
-    if(!decor){decor=document.createElement('div');decor.className='cv-season-decor';decor.setAttribute('aria-hidden','true');hero.appendChild(decor);}
-    decor.replaceChildren();
-    const symbols=SYMBOLS[season];
-    for(let i=0;i<21;i++){
-      const piece=document.createElement('span');piece.className='cv-season-piece';piece.textContent=symbols[i%symbols.length];
-      piece.style.left=(((i*41+13)%98)+1)+'%';
-      piece.style.setProperty('--cv-size',(11+(i*7)%13)+'px');
-      piece.style.setProperty('--cv-duration',(9+(i*3)%10)+'s');
-      piece.style.setProperty('--cv-delay',(-1*(i*1.67)%19)+'s');
-      piece.style.setProperty('--cv-drift',(((i*17)%90)-45)+'px');
-      decor.appendChild(piece);
-    }
-    let label=hero.querySelector('.cv-xmas-label');
-    if(!label){label=document.createElement('span');label.className='cv-xmas-label';label.setAttribute('aria-hidden','true');label.textContent='🎄 Christmas Special · Dec 24–25';hero.appendChild(label);}
-  }
-  function update(){
-    const now=dateParts();
-    const season=seasonFor(now.month);
-    const christmas=now.month===12&&(now.day===24||now.day===25);
-    document.documentElement.dataset.cvSeason=season;
-    document.documentElement.dataset.cvChristmas=String(christmas);
-    const state=season+':'+christmas;
-    if(state!==last){last=state;refreshDecor(season,christmas);}
-  }
-  const now=dateParts();
-  document.documentElement.dataset.cvSeason=seasonFor(now.month);
-  document.documentElement.dataset.cvChristmas=String(now.month===12&&(now.day===24||now.day===25));
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',update,{once:true});else update();
-  setInterval(update,60*1000);
+  let label=hero.querySelector('.cv-xmas-label');
+  if(!label){label=document.createElement('span');label.className='cv-xmas-label';label.setAttribute('aria-hidden','true');label.textContent='🎄 Christmas Special · Dec 24–25';hero.appendChild(label);}
+ }
+ function update(){
+  const {s,x}=getTheme();document.documentElement.dataset.cvSeason=s;document.documentElement.dataset.cvChristmas=String(x);
+  const k=s+':'+x;if(k!==last){last=k;showDecor(s,x);}
+ }
+ const {s,x}=getTheme();document.documentElement.dataset.cvSeason=s;document.documentElement.dataset.cvChristmas=String(x);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',update,{once:true});else update();
+ setInterval(update,60*1000);
 })();
 </script>
 </head>

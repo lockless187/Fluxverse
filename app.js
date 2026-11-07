@@ -1,4 +1,4 @@
-// Cinder Supabase settings: use Project URL + Publishable key only.
+// Spodium Supabase settings: use Project URL + Publishable key only.
 // NEVER put a service_role key, secret key, or database password in browser code.
 const SUPABASE_URL = "https://btifqqcrifafhnnccqmq.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_R5hNzUkxIjmAxRb1lYwFww_1vBVRHOo";
@@ -29,7 +29,7 @@ function card(g){
  const owned=libraryIds.has(id),wished=wishlistIds.has(id),image=coverFor(g);
  const action=free?(owned?'In Library':'Add Free Game'):(wished?'♥ Saved':'♡ Wishlist');
  const primary=free?(owned?`<button class="small" type="button" data-download="${esc(id)}">↓ Download</button>`:`<button class="small" type="button" data-game="${esc(id)}" data-action="add">${action}</button>`):`<button class="small" type="button" data-game="${esc(id)}" data-action="wish">${action}</button>`;
- return `<article class="game fv-game-tile" data-card-id="${esc(id)}"><button type="button" class="cover fv-open-cover ${image?'has-image':''}" data-view-game="${esc(id)}" aria-label="View ${esc(name)} details" style="--cover:${palettes[i]}">${image?`<img src="${esc(image)}" alt="${esc(name)} cover" loading="lazy">`:`<b>${esc(sig)}</b>`}<span class="tag">${esc(g.genre||'Game')}</span></button><div class="game-info"><div class="meta"><span>${esc(g.genre||'Uncategorized')}</span><span>CINDER</span></div><button type="button" class="fv-game-title" data-view-game="${esc(id)}">${esc(name)}</button><p>${esc(g.description||'Discover your next adventure.')}</p><div class="game-bottom"><span class="price">${money(g.price_cents)}</span>${primary}</div><button type="button" class="fv-view-link" data-view-game="${esc(id)}">View game details →</button></div></article>`;
+ return `<article class="game fv-game-tile" data-card-id="${esc(id)}"><button type="button" class="cover fv-open-cover ${image?'has-image':''}" data-view-game="${esc(id)}" aria-label="View ${esc(name)} details" style="--cover:${palettes[i]}">${image?`<img src="${esc(image)}" alt="${esc(name)} cover" loading="lazy">`:`<b>${esc(sig)}</b>`}<span class="tag">${esc(g.genre||'Game')}</span></button><div class="game-info"><div class="meta"><span>${esc(g.genre||'Uncategorized')}</span><span>SPODIUM</span></div><button type="button" class="fv-game-title" data-view-game="${esc(id)}">${esc(name)}</button><p>${esc(g.description||'Discover your next adventure.')}</p><div class="game-bottom"><span class="price">${money(g.price_cents)}</span>${primary}</div><button type="button" class="fv-view-link" data-view-game="${esc(id)}">View game details →</button></div></article>`;
 }
 // Only administrator-approved Developer Portal releases are published in the public Store.
 // The original seeded test games remain in Supabase but are hidden here (no data deletion).
@@ -87,7 +87,7 @@ function fvGetFilteredGames(term=''){
 }
 function renderAll(term=''){
  const q=String(term||'').trim(),list=fvGetFilteredGames(q);
- const heading={all:'Games on Cinder',free:'Free to Play',new:'New Releases',deals:'Deals',weekends:'Free Weekends'}[fxBrowseMode]||'Games on Cinder';
+ const heading={all:'Games on Spodium',free:'Free to Play',new:'New Releases',deals:'Deals',weekends:'Free Weekends'}[fxBrowseMode]||'Games on Spodium';
  $('fx-games-heading').textContent=heading;
  $('fx-filter-description').textContent=q?`Results for “${q}”`:(activeGenre!=='All'&&fxBrowseMode==='all'?`${activeGenre} games`:'Browse real, approved releases.');
  $('game-count').textContent=`${list.length} ${list.length===1?'game':'games'}`;
@@ -103,7 +103,7 @@ function renderAll(term=''){
  else if(q)msg.textContent=`No published games match “${q}”. Try a different search.`;
  else if(fxBrowseMode==='new')msg.textContent='No games have been published in the last 90 days. Check back when new releases arrive.';
  else if(activeGenre!=='All')msg.textContent=`There are no published ${activeGenre} games yet.`;
- else msg.textContent='Games will appear here automatically after they’re submitted and approved for Cinder.';
+ else msg.textContent='Games will appear here automatically after they’re submitted and approved for Spodium.';
  if(!noPublished && !list.length){
   // Show the existing no-results status below the real catalog toolbar.
   $('fx-empty-state').classList.remove('hidden');
@@ -148,15 +148,15 @@ async function loadDeveloperPortal(){
  const logged=!!user;$('developer-login').classList.toggle('hidden',logged);$('developer-apply').classList.add('hidden');$('developer-status').classList.add('hidden');$('developer-tools').classList.add('hidden');$('admin-tools').classList.add('hidden');
  if(!logged)return;
  const appRes=await db.from('developer_applications').select('*').eq('user_id',user.id).maybeSingle();
- if(appRes.error){$('developer-status').classList.remove('hidden');$('developer-status').innerHTML='<b>Developer setup is not ready yet.</b><p class="muted">Run the Cinder Developer Portal SQL file in Supabase first. Details: '+esc(appRes.error.message)+'</p>';return;}
+ if(appRes.error){$('developer-status').classList.remove('hidden');$('developer-status').innerHTML='<b>Developer setup is not ready yet.</b><p class="muted">Run the Spodium Developer Portal SQL file in Supabase first. Details: '+esc(appRes.error.message)+'</p>';return;}
  developerApplication=appRes.data;
  const adminRes=await db.rpc('is_fluxverse_admin');isFluxAdmin=!adminRes.error&&adminRes.data===true;
  if(!developerApplication){$('developer-apply').classList.remove('hidden');}
  else if(developerApplication.status==='approved'){$('developer-tools').classList.remove('hidden');loadDeveloperSubmissions();}
- else{$('developer-status').classList.remove('hidden');$('developer-status').innerHTML=`<div class="section-title"><h2>Application ${esc(developerApplication.status)}</h2><span class="status-pill">${esc(developerApplication.status)}</span></div><p>Studio: <b>${esc(developerApplication.studio_name)}</b></p><p class="muted">${developerApplication.status==='pending'?'Your application is waiting for review. You can return here to check its status.':'Your application was not approved. You can contact Cinder support if you believe this was a mistake.'}</p>`;}
+ else{$('developer-status').classList.remove('hidden');$('developer-status').innerHTML=`<div class="section-title"><h2>Application ${esc(developerApplication.status)}</h2><span class="status-pill">${esc(developerApplication.status)}</span></div><p>Studio: <b>${esc(developerApplication.studio_name)}</b></p><p class="muted">${developerApplication.status==='pending'?'Your application is waiting for review. You can return here to check its status.':'Your application was not approved. You can contact Spodium support if you believe this was a mistake.'}</p>`;}
  if(isFluxAdmin){$('admin-tools').classList.remove('hidden');loadAdminQueue();}
 }
-// ---- Cinder Developer Suite v3 ----
+// ---- Spodium Developer Suite v3 ----
 const FV_MEDIA_BUCKET = 'fv-game-media';
 const FV_BUILD_BUCKET = 'fv-game-builds';
 const FV_IMAGE_MAX = 6 * 1024 * 1024;
@@ -383,11 +383,11 @@ function fvUpdateGameActions(){
 }
 async function fvOpenGame(gameId,{fromUrl=false}={}){
  const g=games.find(x=>String(x.id)===String(gameId));
- if(!g){fvShowInfo('Game not available','This game has not been published on Cinder or is no longer available.');return;}
+ if(!g){fvShowInfo('Game not available','This game has not been published on Spodium or is no longer available.');return;}
  fvFocusReturn=document.activeElement;
  fvOpenGameId=String(g.id);fvGalleryIndex=0;fvDetailMetadata=null;
  const img=coverFor(g),free=Number(g.price_cents)===0;
- $('fv-game-detail-content').innerHTML=`<div class="fv-detail-header">${img?`<div class="fv-detail-cover"><img src="${esc(img)}" alt="${esc(g.title)} cover"></div>`:'<div class="fv-detail-cover fv-detail-placeholder">✦</div>'}<div class="fv-detail-overview"><span class="fv-detail-eyebrow">PUBLISHED ON CINDER</span><h2 id="fv-detail-title">${esc(g.title)}</h2><div class="fv-detail-badges"><span>${esc(g.genre||'Game')}</span><span>${free?'Free to Play':'Paid listing'}</span></div><div class="fv-detail-price">${money(g.price_cents)}${!free?'<small>Checkout not enabled</small>':''}</div><div class="fv-detail-actions" id="fv-detail-actions">${fvPriceState(g)}</div><button type="button" class="fv-share" id="fv-copy-link">↗ Copy game link</button></div></div><div class="fv-detail-columns"><section><h3>About this game</h3><p id="fv-detail-description">${esc(g.description||'No description added yet.')}</p><div id="fv-gallery-wrapper"></div></section><section class="fv-specs"><h3>Game information</h3><p><b>Genre</b> ${esc(g.genre||'Game')}</p><p><b>Availability</b> ${free?'Free for registered players':'Listing only — purchases disabled'}</p><div id="fv-more-metadata"><p><b>Release information</b> Loading…</p></div></section></div>`;
+ $('fv-game-detail-content').innerHTML=`<div class="fv-detail-header">${img?`<div class="fv-detail-cover"><img src="${esc(img)}" alt="${esc(g.title)} cover"></div>`:'<div class="fv-detail-cover fv-detail-placeholder">✦</div>'}<div class="fv-detail-overview"><span class="fv-detail-eyebrow">PUBLISHED ON SPODIUM</span><h2 id="fv-detail-title">${esc(g.title)}</h2><div class="fv-detail-badges"><span>${esc(g.genre||'Game')}</span><span>${free?'Free to Play':'Paid listing'}</span></div><div class="fv-detail-price">${money(g.price_cents)}${!free?'<small>Checkout not enabled</small>':''}</div><div class="fv-detail-actions" id="fv-detail-actions">${fvPriceState(g)}</div><button type="button" class="fv-share" id="fv-copy-link">↗ Copy game link</button></div></div><div class="fv-detail-columns"><section><h3>About this game</h3><p id="fv-detail-description">${esc(g.description||'No description added yet.')}</p><div id="fv-gallery-wrapper"></div></section><section class="fv-specs"><h3>Game information</h3><p><b>Genre</b> ${esc(g.genre||'Game')}</p><p><b>Availability</b> ${free?'Free for registered players':'Listing only — purchases disabled'}</p><div id="fv-more-metadata"><p><b>Release information</b> Loading…</p></div></section></div>`;
  $('fv-game-modal').classList.remove('hidden');
  fv7ReviewPanel(String(gameId));
  $('fv-game-modal').querySelector('.fv-game-dialog').focus();
@@ -463,7 +463,7 @@ document.addEventListener("click",async e=>{
  if(e.target.closest('#fv-game-claim')){const g=games.find(x=>String(x.id)===fvOpenGameId);if(g)await fvPerformGameAction(String(g.id),'add');return;}
  if(e.target.closest('#fv-game-wish')){if(fvOpenGameId)await fvPerformGameAction(fvOpenGameId,'wish');return;}
  if(e.target.closest('#fv-game-download')){if(fvOpenGameId)await fvDownloadBuild(fvOpenGameId);return;}
- if(e.target.closest('#fv-game-checkout')){fvShowInfo('Purchases aren’t active yet','Paid game checkout is not available on Cinder yet. Save this game to your Wishlist; no payment has been taken.');return;}
+ if(e.target.closest('#fv-game-checkout')){fvShowInfo('Purchases aren’t active yet','Paid game checkout is not available on Spodium yet. Save this game to your Wishlist; no payment has been taken.');return;}
 
  const storeNav=e.target.closest('[data-store-nav]');if(storeNav){fxStoreNavigate(storeNav.dataset.storeNav);document.getElementById('discover-menu')?.classList.add('hidden');return;}
  if(e.target.closest('#watch-trailer')){fvShowInfo('Game trailers','Trailers will become available here when approved developers add them to their game pages. Explore the catalog to see available releases.');return;}
@@ -497,7 +497,7 @@ document.addEventListener("click",async e=>{
 if(e.target.closest("#genre-toggle")||e.target.closest("#more-genres")){const box=$("genres"),toggle=$("genre-toggle");const opening=box.classList.contains("collapsed");box.classList.toggle("collapsed",!opening);toggle.setAttribute("aria-expanded",String(opening));$("genre-chevron").textContent=opening?"⌃":"⌄";return;}let n=e.target.closest("[data-page]");if(n){page(n.dataset.page);return;}let sc=e.target.closest("[data-scroll]");if(sc){document.getElementById(sc.dataset.scroll)?.scrollIntoView({behavior:"smooth",block:"start"});return;}let go=e.target.closest("[data-go]");if(go){page(go.dataset.go);return;}if(e.target.id==="auth-open"){openAuth("login");return;}if(e.target.matches("[data-close]")){closeAuth();return;}let m=e.target.closest("[data-mode]");if(m){setMode(m.dataset.mode);return;}let g=e.target.closest('[data-game]');
 if(g){await fvPerformGameAction(g.dataset.game,g.dataset.action);return;}
 let a=e.target.closest("[data-accept]");if(a){let {error}=await db.from("friend_requests").update({status:"accepted"}).eq("id",a.dataset.accept);toast(error?error.message:"Friend request accepted!");loadFriends();return;}let s=e.target.closest("[data-send]");if(s){let {error}=await db.from("friend_requests").insert({sender_id:user.id,receiver_id:s.dataset.send});toast(error?error.message:"Friend request sent!");loadFriends();return;}if(e.target.id==="developer-signin"){openAuth("login");return;}let aa=e.target.closest("[data-admin-app]");if(aa){let {error}=await db.from("developer_applications").update({status:aa.dataset.status,reviewed_at:new Date().toISOString()}).eq("id",aa.dataset.adminApp);toast(error?error.message:"Application "+aa.dataset.status+".");loadDeveloperPortal();return;}let ag=e.target.closest("[data-admin-game]");if(ag){let {error}=await db.from("developer_game_submissions").update({status:ag.dataset.status,reviewed_at:new Date().toISOString()}).eq("id",ag.dataset.adminGame);toast(error?error.message:"Game submission "+ag.dataset.status+".");loadAdminQueue();return;}if(e.target.id==="sign-out"){await db.auth.signOut();toast("Signed out.");}});
-$("auth-form").addEventListener("submit",async e=>{e.preventDefault();if(!db){toast("Add Supabase settings to app.js first.");return;}let email=$("email").value.trim(),password=$("password").value,msg=$("auth-message");msg.textContent="Please wait…";let result;if(authMode==="signup"){let username=$("username").value.trim().toLowerCase(),display_name=$("display").value.trim()||username;if(!/^[a-z0-9_]{3,24}$/.test(username)){msg.textContent="Username: 3–24 letters, numbers or underscores.";return;}result=await db.auth.signUp({email,password,options:{data:{username,display_name}}});}else result=await db.auth.signInWithPassword({email,password});if(result.error){msg.textContent=result.error.message;return;}if(authMode==="signup"&&!result.data.session){msg.textContent="Account created! Check your email to confirm, then sign in.";return;}$("auth-form").reset();const signedIn=await fv8CheckSession(result.data?.user||null);if(!signedIn)return;closeAuth();if(user && user.id===result.data?.user?.id)toast("Welcome to Cinder!");});
+$("auth-form").addEventListener("submit",async e=>{e.preventDefault();if(!db){toast("Add Supabase settings to app.js first.");return;}let email=$("email").value.trim(),password=$("password").value,msg=$("auth-message");msg.textContent="Please wait…";let result;if(authMode==="signup"){let username=$("username").value.trim().toLowerCase(),display_name=$("display").value.trim()||username;if(!/^[a-z0-9_]{3,24}$/.test(username)){msg.textContent="Username: 3–24 letters, numbers or underscores.";return;}result=await db.auth.signUp({email,password,options:{data:{username,display_name}}});}else result=await db.auth.signInWithPassword({email,password});if(result.error){msg.textContent=result.error.message;return;}if(authMode==="signup"&&!result.data.session){msg.textContent="Account created! Check your email to confirm, then sign in.";return;}$("auth-form").reset();const signedIn=await fv8CheckSession(result.data?.user||null);if(!signedIn)return;closeAuth();if(user && user.id===result.data?.user?.id)toast("Welcome to Spodium!");});
 $('search').addEventListener('input',e=>{fxHomeSelected=false;fxBrowseMode='all';activeGenre='All';renderGenres();renderAll(e.target.value);if(!$('page-store').classList.contains('active'))page('store');});
 $('fv-sort').addEventListener('change',()=>renderGames());
 $("search").addEventListener("keydown",e=>{if(e.key==='Enter'){e.preventDefault();page('store');$('all-games').scrollIntoView({behavior:'smooth'});}});
@@ -580,7 +580,7 @@ setInterval(()=>{if(!document.hidden&&$('page-store').classList.contains('active
 // Closing dialogs with a click outside or Escape does not change the active Store tab.
 window.addEventListener('popstate',()=>{const id=new URLSearchParams(location.search).get('game');if(id&&games.some(g=>String(g.id)===id))fvOpenGame(id,{fromUrl:true});else if(fvOpenGameId)fvCloseGame({fromUrl:true});});
 
-/* ---- Cinder v7 Social, Profiles & Community Suite ----
+/* ---- Spodium v7 Social, Profiles & Community Suite ----
    Additive to Store v6. Supabase SQL migration 01_SOCIAL_UPGRADE.sql required. */
 const fv7AvatarIcons=["🎮","🚀","⚡","🌌","👾","🐉","🏆","🛡️","🎯","🌟","🌠","🪐","🌙","☀️","🌈","🔥","❄️","🌊","🌋","🌵","🌲","🍁","🌸","🌼","🍀","🍄","🦋","🐝","🦉","🦅","🐺","🦊","🐻","🐼","🐯","🦁","🐲","🐬","🦈","🐙","🐢","🦎","🦂","🕷️","🦇","🦄","🦖","🐊","🐘","🦒","🦓","🐎","🦜","🦚","🐧","🦦","🦥","🤖","👽","👻","💀","🎃","🧙","🧛","🧟","👑","💎","🗡️","🏹","🔮","🪄","📜","⚙️","🔧","🛠️","🧲","💻","🖥️","⌨️","🕹️","🎲","♟️","🧩","🎨","🎭","🎸","🎧","🎹","🥁","🎷","🎺","🎻","📷","🎬","🛸","🚁","🏎️","🚂","⚓","🧭"];
 const fv7AccentColors=["#00c9ff","#98ff00","#ffe700","#ff9d00","#ff579d","#b699ff","#49e476","#a048e0","#dcc946","#45bfd8","#e84aa0","#70e449","#4e48e0","#dc7846","#45d8a1","#d935e8","#bfe434","#3389e0","#dc3356","#32d840","#7935e8","#e4aa34","#33e0d9","#dc33b1","#7dd832","#2041e8","#e43920","#1fe070","#a51fdc","#d7d81e","#20ade8","#e42071","#37e01f","#3f1fdc","#d8741e","#4ae8c1","#e449dd","#ace048","#467edc","#d84551","#4ae86c","#9749e4","#e0c148","#46cfdc","#d845a0","#70e835","#343be4","#e06033","#33dc8f","#bd32d8","#d1e835","#349ae4","#e03365","#33dc34","#6332d8","#e89620","#20e4cd","#e01fbe","#84dc1f","#1e4bd8","#e82a20","#20e463","#991fe0","#dcce1f","#1eb0d8","#e84a98","#68e449","#5648e0","#dc8046","#45d8a8","#e34ae8","#bce449","#488ce0","#dc465e","#45d859","#8135e8","#e4b234","#33dee0","#dc33a9","#75d832","#354ae8","#e45334","#33e084","#b333dc","#cfd832","#20a3e8","#e42067","#2de01f","#481fdc","#d87d1e","#20e8c1","#e420d1","#95e01f","#1f5cdc","#d81e24","#4ae874","#9f49e4","#e0c848","#46c7dc","#d84599"];
@@ -650,7 +650,7 @@ async function fv7PublicProfile(id){
   const actions=mine?`<button type="button" class="primary" data-page="profile" data-fv7-close-public>Open account settings</button>`:
    (user?`${relationship?(relationship.status==='accepted'?`<button type="button" class="outline" data-fv7-chat="${esc(id)}">Message</button>`:`<span class="muted">Friend request ${relationship.incoming?'received':'sent'}</span>`):`<button type="button" class="primary" data-fv7-friend="request" data-target="${esc(id)}">Send friend request</button>`}
    <button type="button" class="outline" data-fv7-friend="block" data-target="${esc(id)}">Block player</button><button type="button" class="outline" data-fv7-report="profile" data-target="${esc(id)}">Report profile</button>`:'<button class="primary" type="button" id="fv7-public-signin">Sign in to connect</button>');
-  $('fv7-public-content').innerHTML=`<div class="fv7-profile-public"><div class="fv7-public-identity">${fv7HtmlPerson({...p,avatar_icon:p.avatar_icon})}<div><span class="fv7-stage-tag">CINDER PLAYER</span><h2 id="fv7-public-title">${esc(p.display_name||p.username||'Player')}</h2><p>@${esc(p.username||'player')}</p></div></div><p>${p.private?'This player has a private profile.':esc(p.bio||'This player has not added a bio yet.')}</p><div class="fv7-actions">${actions}</div></div>`;
+  $('fv7-public-content').innerHTML=`<div class="fv7-profile-public"><div class="fv7-public-identity">${fv7HtmlPerson({...p,avatar_icon:p.avatar_icon})}<div><span class="fv7-stage-tag">SPODIUM PLAYER</span><h2 id="fv7-public-title">${esc(p.display_name||p.username||'Player')}</h2><p>@${esc(p.username||'player')}</p></div></div><p>${p.private?'This player has a private profile.':esc(p.bio||'This player has not added a bio yet.')}</p><div class="fv7-actions">${actions}</div></div>`;
  }catch(err){$('fv7-public-content').innerHTML=`<h2>Can't load profile</h2><p>${esc(err.message)}</p>`;}
 }
 function fv7ClosePublic(){fv7OpenPublicUser=null;$('fv7-public-modal').classList.add('hidden');}
@@ -770,7 +770,7 @@ async function fv7LoadNotifications(){
  $('fv7-notifications-list').innerHTML='<div class="empty">Loading notifications…</div>';
  try{
   const data=await fv7Rpc('fv_social_notifications_list');
-  $('fv7-notifications-list').innerHTML=(data||[]).length?(data||[]).map(n=>`<div class="fv7-notice ${n.read?'':'unread'}"><span class="fv7-avatar" aria-hidden="true">${({friend_request:'👋',friend_accepted:'🎉',comment:'💬',like:'♥',message:'✉️'})[n.kind]||'✦'}</span><div class="fv7-notice-copy"><b>${esc(n.title)}</b><small>${esc(n.actor_name||'Cinder')} · ${fv7Date(n.created_at)}</small>${n.message?`<small>${esc(n.message)}</small>`:''}</div><div class="fv7-person-actions">${n.actor_id&&fv7Uuid(n.actor_id)?`<button type="button" data-fv7-user="${esc(n.actor_id)}">View</button>`:''}${!n.read?`<button type="button" data-fv7-mark="${esc(n.id)}">Mark read</button>`:''}</div></div>`).join(''):'<div class="empty">No notifications yet. New activity will appear here.</div>';
+  $('fv7-notifications-list').innerHTML=(data||[]).length?(data||[]).map(n=>`<div class="fv7-notice ${n.read?'':'unread'}"><span class="fv7-avatar" aria-hidden="true">${({friend_request:'👋',friend_accepted:'🎉',comment:'💬',like:'♥',message:'✉️'})[n.kind]||'✦'}</span><div class="fv7-notice-copy"><b>${esc(n.title)}</b><small>${esc(n.actor_name||'Spodium')} · ${fv7Date(n.created_at)}</small>${n.message?`<small>${esc(n.message)}</small>`:''}</div><div class="fv7-person-actions">${n.actor_id&&fv7Uuid(n.actor_id)?`<button type="button" data-fv7-user="${esc(n.actor_id)}">View</button>`:''}${!n.read?`<button type="button" data-fv7-mark="${esc(n.id)}">Mark read</button>`:''}</div></div>`).join(''):'<div class="empty">No notifications yet. New activity will appear here.</div>';
   fv7UpdateUnread();
  }catch(err){$('fv7-notifications-list').innerHTML='<div class="empty">'+esc(err.message)+'</div>';}
 }
@@ -895,7 +895,7 @@ if(new URLSearchParams(location.search).has('player')){
 }
 
 
-// ---------- Cinder v8: password reset and account recovery ----------
+// ---------- Spodium v8: password reset and account recovery ----------
 // The Supabase publishable key is the ONLY key in this browser application.
 // Recovery requests do not return account emails or confirm whether usernames exist.
 let fv8RecoveryMode=new URLSearchParams(location.search).get('fv_reset')==='1';
@@ -921,7 +921,7 @@ function fv8ShowRecoveryModal(){
  $('fv8-new-password-status').textContent='';
  $('fv8-new-password').focus();
 }
-// Cinder has removed 2FA enrollment and code-entry screens.
+// Spodium has removed 2FA enrollment and code-entry screens.
 // Safety for existing users: do not silently bypass any previously enrolled factor.
 // An affected player must contact support for a verified factor reset.
 async function fv8CheckSession(authUser){
@@ -943,7 +943,7 @@ async function fv8CheckSession(authUser){
  if(check.data?.currentLevel==='aal1' && check.data?.nextLevel==='aal2'){
   user=null;await updateUser();
   await db.auth.signOut();openAuth('login');
-  $('auth-message').textContent='This account previously enabled two-step verification. Please contact Cinder support to safely remove the old security factor before signing in.';
+  $('auth-message').textContent='This account previously enabled two-step verification. Please contact Spodium support to safely remove the old security factor before signing in.';
   return false;
  }
  user=authUser;
@@ -961,7 +961,7 @@ async function fv8LoadRecoveryRequests(){
  if(error){$('fv8-recovery-list').textContent='Recovery inbox unavailable: '+error.message;return;}
  const rows=Array.isArray(data)?data:[];
  $('fv8-recovery-list').innerHTML=rows.length?rows.map(r=>{
-  const history=(r.messages||[]).map(m=>`<p class="fv81-msg ${m.author==='staff'?'staff':''}"><b>${m.author==='staff'?'Cinder support':'Requester'}:</b> ${esc(m.body)}</p>`).join('');
+  const history=(r.messages||[]).map(m=>`<p class="fv81-msg ${m.author==='staff'?'staff':''}"><b>${m.author==='staff'?'Spodium support':'Requester'}:</b> ${esc(m.body)}</p>`).join('');
   const states=['open','reviewed','waiting_for_player','resolved','declined'];
   const opts=states.map(st=>`<option value="${st}" ${r.status===st?'selected':''}>${st.replaceAll('_',' ')}</option>`).join('');
   return `<article class="fv81-case fv7-report-card"><b>@${esc(r.username)} · ${esc(r.status)}</b>
@@ -1034,7 +1034,7 @@ document.addEventListener('submit',async e=>{
 });
 
 
-// ---------- Cinder v8.1: private support tickets + pre-enrolled backup proof ----------
+// ---------- Spodium v8.1: private support tickets + pre-enrolled backup proof ----------
 let fv81TicketCode='';
 async function fv81LoadTicket(){
  const code=$('fv81-track-code').value.trim();
@@ -1045,8 +1045,8 @@ async function fv81LoadTicket(){
  if(error){$('fv81-track-status').textContent=error.message;return;}
  fv81TicketCode=code;
  $('fv81-track-status').textContent='Request loaded.';
- $('fv81-ticket-summary').innerHTML=`<p><b>Status:</b> ${esc((data?.status||'open').replaceAll('_',' '))}</p><p><b>Ownership proof:</b> ${data?.verified?'Verified using a previously saved Cinder recovery proof code':'Not verified'}</p>`;
- $('fv81-ticket-messages').innerHTML=(data?.messages||[]).length?(data.messages||[]).map(m=>`<p class="fv81-msg ${m.author==='staff'?'staff':''}"><b>${m.author==='staff'?'Cinder support':'You'}:</b> ${esc(m.body)}</p>`).join(''):'<p class="muted">No replies yet. Check again later using the same code.</p>';
+ $('fv81-ticket-summary').innerHTML=`<p><b>Status:</b> ${esc((data?.status||'open').replaceAll('_',' '))}</p><p><b>Ownership proof:</b> ${data?.verified?'Verified using a previously saved Spodium recovery proof code':'Not verified'}</p>`;
+ $('fv81-ticket-messages').innerHTML=(data?.messages||[]).length?(data.messages||[]).map(m=>`<p class="fv81-msg ${m.author==='staff'?'staff':''}"><b>${m.author==='staff'?'Spodium support':'You'}:</b> ${esc(m.body)}</p>`).join(''):'<p class="muted">No replies yet. Check again later using the same code.</p>';
  const closed=['resolved','declined'].includes(data?.status);
  $('fv81-ticket-send').disabled=closed;
  $('fv81-verify-proof').disabled=!!data?.verified || closed;
@@ -1094,7 +1094,7 @@ document.addEventListener('click',async e=>{
   const btn=$('fv81-verify-proof');btn.disabled=true;
   const {data,error}=await db.rpc('fv81_verify_backup_code',{p_tracking_code:fv81TicketCode,p_backup_code:proof});
   $('fv81-proof-code').value='';
-  $('fv81-proof-status').textContent=error?error.message:data?'Ownership proof verified. Cinder staff must still process recovery securely.':'Verification failed or the code has expired. Do not share the code with anyone.';
+  $('fv81-proof-status').textContent=error?error.message:data?'Ownership proof verified. Spodium staff must still process recovery securely.':'Verification failed or the code has expired. Do not share the code with anyone.';
   if(data)await fv81LoadTicket();else btn.disabled=false;
  }
 });
@@ -1116,7 +1116,7 @@ document.addEventListener('submit',async e=>{
 
 
 
-/* Cinder v9: customizable profiles, earned milestones, verified game achievements,
+/* Spodium v9: customizable profiles, earned milestones, verified game achievements,
    privacy exports, deletion requests and admin safety queue.
    Requires 01_FLUXVERSE_V9.sql; no secrets or service-role keys in this script. */
 const fv9Defaults={theme:'neo',background:'nebula',frame:'glow',banner:'horizon',layout:'spotlight',accent:'original'};
@@ -1254,13 +1254,13 @@ function fv9ApplyTheme(){
  const card=$('fv9-live-preview');if(!card)return;
  const s=fv9DraftStyle();card.className='fv9-live-preview fv9-profile-render '+fv9ThemeClass(s);fv9SetGeneratedStyle(card,s);
  const avatar=$('fv9-preview-avatar');avatar.textContent=fv7Icon(fv7Avatar||profile?.avatar_icon);
- const name=$('fv7-display')?.value.trim()||profile?.display_name||profile?.username||'Your Cinder profile';
+ const name=$('fv7-display')?.value.trim()||profile?.display_name||profile?.username||'Your Spodium profile';
  $('fv9-preview-name').textContent=name;
  $('fv9-preview-handle').textContent='@'+($('fv7-username')?.value.trim()||profile?.username||'player');
  $('fv9-preview-bio').textContent=$('fv7-bio')?.value.trim()||profile?.bio||'Tell players about yourself.';
  $('fv9-preview-favorite').textContent=s.favorite_game||'Choose a favorite game';
  $('fv9-preview-status').textContent=s.player_status||'Ready to play';
- $('fv9-preview-joined').textContent=fv9LatestHub?.joined_at?fv9DisplayDate(fv9LatestHub.joined_at):'Cinder member';
+ $('fv9-preview-joined').textContent=fv9LatestHub?.joined_at?fv9DisplayDate(fv9LatestHub.joined_at):'Spodium member';
  $('fv9-preview-badges').innerHTML=fv9PreviewBadges(fv9LatestHub?.badges);
  $('fv9-preview-achievements').innerHTML=fv9PreviewAchievements(fv9LatestHub?.game_achievements);
  document.querySelectorAll('[data-fv9-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fv9Preset===s.theme)));
@@ -1279,8 +1279,8 @@ async function fv9LoadHub(){
   const style={...fv9Defaults,...(data?.style||{})};
   fv9SavedStyle={...style};fv9SetupLibrary();fv9FillStyle(style);
   if($('fv9-style-message'))$('fv9-style-message').textContent='Profile design loaded. Try a new look — changes are private until you save.';
-  $('fv9-account-since').textContent=`Cinder member since ${fv9DisplayDate(data.joined_at)} · ${data.years||0} complete year(s) · anniversary badges unlock automatically.`;
-  $('fv9-badges').innerHTML=(data.badges||[]).map(b=>`<div class="fv9-award"><span>${fv9Safe(b.icon||'🏅')}</span><div><strong>${fv9Safe(b.title)}</strong><small>${fv9Safe(b.detail||'Earned on Cinder')}</small></div></div>`).join('')||'<p class="muted">No badges yet.</p>';
+  $('fv9-account-since').textContent=`Spodium member since ${fv9DisplayDate(data.joined_at)} · ${data.years||0} complete year(s) · anniversary badges unlock automatically.`;
+  $('fv9-badges').innerHTML=(data.badges||[]).map(b=>`<div class="fv9-award"><span>${fv9Safe(b.icon||'🏅')}</span><div><strong>${fv9Safe(b.title)}</strong><small>${fv9Safe(b.detail||'Earned on Spodium')}</small></div></div>`).join('')||'<p class="muted">No badges yet.</p>';
   $('fv9-game-achievements').innerHTML=(data.game_achievements||[]).map(a=>`<div class="fv9-award"><span>${fv9Safe(a.icon||'🏆')}</span><div><strong>${fv9Safe(a.title)}</strong><small>${fv9Safe(a.game)} · ${fv9DisplayDate(a.awarded_at)}</small><p>${fv9Safe(a.description||'')}</p></div></div>`).join('')||'<p class="muted">No verified game achievements yet. They appear when a trusted game system or administrator confirms an achievement.</p>';
   fv9ApplyTheme();
   const del=await fv7Rpc('fv9_my_deletion_status');
@@ -1310,15 +1310,15 @@ fv7PublicProfile=async function(id){
   const data=await fv7Rpc('fv9_public_showcase',{p_user:id});
   if(!data||fv7OpenPublicUser!==id)return;
   const el=$('fv7-public-content');if(!el)return;
-  const name=el.querySelector('#fv7-public-title')?.textContent||'Cinder player';
+  const name=el.querySelector('#fv7-public-title')?.textContent||'Spodium player';
   const root=el.querySelector('.fv7-profile-public');
   const bio=root?.querySelector(':scope > p')?.textContent||'This player has not added a bio yet.';
   const handle=el.querySelector('.fv7-public-identity p')?.textContent||'';
   const panel=document.createElement('div');panel.className='fv9-public-showcase fv9-profile-render '+fv9ThemeClass(data.style);fv9SetGeneratedStyle(panel,{...fv9Defaults,...(data.style||{})});
   const avatar=el.querySelector('.fv7-public-identity')?.querySelector('span')?.textContent||'🎮';
   const favorite=data.style?.favorite_game||'No favorite game selected';
-  const status=data.style?.player_status||'Exploring Cinder';
-  panel.innerHTML=`<div class="fv9-render-cover"><span class="fv9-render-label">CINDER • PLAYER PROFILE</span><span class="fv9-render-art">✧</span></div>
+  const status=data.style?.player_status||'Exploring Spodium';
+  panel.innerHTML=`<div class="fv9-render-cover"><span class="fv9-render-label">SPODIUM • PLAYER PROFILE</span><span class="fv9-render-art">✧</span></div>
    <div class="fv9-render-inner"><div class="fv9-render-identity"><span class="fv9-render-avatar">${fv9Safe(avatar)}</span><div><h3>${fv9Safe(name)}</h3><small>${fv9Safe(handle)}</small><p>${fv9Safe(status)}</p></div></div>
     <div class="fv9-render-body"><div class="fv9-render-primary"><h4>About me</h4><p>${fv9Safe(bio)}</p><h4>Favorite game</h4><p>${fv9Safe(favorite)}</p><div class="fv9-render-stat"><span>Account anniversary</span><strong>${Number(data.anniversary_years)||0} complete year(s)</strong></div></div>
     <div class="fv9-render-showcase"><h4>Badge showcase</h4><div class="fv9-render-icons">${fv9PreviewBadges(data.badges)}</div><h4>Verified achievements (${Number(data.game_achievement_count)||0})</h4><div class="fv9-render-icons">${fv9PreviewAchievements(data.game_achievements)}</div></div></div></div>`;
@@ -1378,7 +1378,7 @@ document.addEventListener('click',async e=>{
   fv7Guard('fv9-export',async()=>{
    const json=await fv7Rpc('fv9_export_my_data');
    const url=URL.createObjectURL(new Blob([JSON.stringify(json,null,2)],{type:'application/json'}));
-   const a=document.createElement('a');a.href=url;a.download='Cinder-my-data-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
+   const a=document.createElement('a');a.href=url;a.download='Spodium-my-data-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
    toast('Your data snapshot was downloaded. Keep it private.');
   });return;
  }
@@ -1413,7 +1413,7 @@ document.addEventListener('submit',e=>{
   if(!confirm('Submit a permanent account deletion request? This does not instantly delete your account.'))return;
   fv7Guard('fv9-delete',async()=>{
    const result=await fv7Rpc('fv9_request_deletion',{p_confirmation:'DELETE',p_reason:$('fv9-delete-reason').value.trim()});
-   $('fv9-delete-confirm').value='';$('fv9-delete-message').textContent=result?.message||'Deletion request submitted.';await fv9LoadHub();toast('Deletion request sent to Cinder staff.');
+   $('fv9-delete-confirm').value='';$('fv9-delete-message').textContent=result?.message||'Deletion request submitted.';await fv9LoadHub();toast('Deletion request sent to Spodium staff.');
   });return;
  }
  const api = async(name,args,success)=>fv7Guard('fv9-admin-submit',async()=>{
@@ -1437,7 +1437,7 @@ document.addEventListener('submit',e=>{
 });
 
 
-/* Cinder v9.1 — server-verified achievements, moderator actions, anti-spam visibility */
+/* Spodium v9.1 — server-verified achievements, moderator actions, anti-spam visibility */
 let fv91Reports=[];
 async function fv91RefreshAdmin(){
   if(!user || !db || !$('fv91-suite'))return;

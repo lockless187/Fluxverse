@@ -187,6 +187,24 @@ function fvCheckBuild(file){
  const ceiling = FV_R2_API ? FV_R2_MAX : FV_ZIP_MAX;
  if(!file.size || file.size > ceiling) throw new Error('Game ZIPs must be between 1 byte and '+(FV_R2_API?'500':'45')+' MB with your current storage setup.');
 }
+async function fv10CheckZipHeader(file){
+ const h=new Uint8Array(await file.slice(0,4).arrayBuffer());
+ if(h.length!==4 || h[0]!==0x50 || h[1]!==0x4b || h[2]!==0x03 || h[3]!==0x04){
+   throw new Error('This file does not appear to be a valid non-empty ZIP archive.');
+ }
+ // This detects an invalid file header only; every game still needs human review and malware scanning.
+}
+async function fv10CheckRelease(id,{quiet=false}={}){
+ const {data,error}=await db.rpc('fv10_submission_preflight',{p_submission_id:String(id)});
+ if(error)throw new Error('Release check failed: '+error.message);
+ const issues=Array.isArray(data?.issues)?data.issues:[];
+ const message=data?.ready?'✓ Release checks passed (still requires human file review).':'Not ready: '+issues.join('; ');
+ document.querySelectorAll('[data-fv10-result]').forEach(el=>{
+  if(el.dataset.fv10Result===String(id))el.textContent=message;
+ });
+ if(!quiet)toast(message.length>150?message.slice(0,147)+'…':message);
+ return data;
+}
 function fvPublicMedia(path){return path ? db.storage.from(FV_MEDIA_BUCKET).getPublicUrl(path).data.publicUrl : '';}
 async function fvLoadAssets(rows){
  const ids=(rows||[]).map(r=>String(r.id));
@@ -254,6 +272,7 @@ async function fvR2DownloadTicket(args){
 }
 async function fvUploadBuild(submissionId,file){
  fvCheckBuild(file);
+ await fv10CheckZipHeader(file);
  if(FV_R2_API) return fvUploadR2Build(submissionId,file);
  const path=`${user.id}/${submissionId}/build-${crypto.randomUUID()}.zip`;
  const {error}=await db.storage.from(FV_BUILD_BUCKET).upload(path,file,{upsert:false,contentType:'application/zip'});
@@ -313,7 +332,7 @@ async function loadDeveloperSubmissions(){
   const a=assets.get(String(g.id)); const pending=g.status==='pending';
   const image=a?.cover_path?`<img class="dev-release-cover" src="${esc(fvPublicMedia(a.cover_path))}" alt="Game cover">`:'';
   const files=`${a?.cover_path?'✓ Cover':'⚠ Cover missing'} · ${a?.build_path?`✓ ZIP (${fvFileSize(a.build_bytes||0)})`:'⚠ ZIP missing'} · ${a?.screenshot_paths?.length||0} screenshot(s)`;
-  return `<article class="dev-release">${image}<div class="dev-release-info"><div class="dev-release-title"><b>${esc(g.title)}</b><span class="status-pill ${g.status==='approved'?'approved':''}">${esc(g.status)}</span></div><p>${esc(g.description||'')}</p><small>${esc(g.genre||'Game')} · ${money(g.price_cents)} · v${esc(a?.release_version||'1.0.0')}</small><small>${files}</small>${g.review_notes?`<p class="dev-review-note"><b>Reviewer:</b> ${esc(g.review_notes)}</p>`:''}${pending?`<div class="admin-actions"><button class="small" data-attach="cover" data-submission="${esc(String(g.id))}">Attach cover</button><button class="small" data-attach="build" data-submission="${esc(String(g.id))}">Attach ZIP</button><button class="small" data-attach="shots" data-submission="${esc(String(g.id))}">Add screenshots</button></div>`:g.status==='approved'?'<small>✓ Published in All Games. Free editions can be claimed and downloaded.</small>':''}</div></article>`;
+  return `<article class="dev-release">${image}<div class="dev-release-info"><div class="dev-release-title"><b>${esc(g.title)}</b><span class="status-pill ${g.status==='approved'?'approved':''}">${esc(g.status)}</span></div><p>${esc(g.description||'')}</p><small>${esc(g.genre||'Game')} · ${money(g.price_cents)} · v${esc(a?.release_version||'1.0.0')}</small><small>${files}</small>${g.review_notes?`<p class="dev-review-note"><b>Reviewer:</b> ${esc(g.review_notes)}</p>`:''}${pending?`<div class="admin-actions"><button class="small" data-attach="cover" data-submission="${esc(String(g.id))}">Attach cover</button><button class="small" data-attach="build" data-submission="${esc(String(g.id))}">Attach ZIP</button><button class="small" data-attach="shots" data-submission="${esc(String(g.id))}">Add screenshots</button>${!a?.distribution_rights_confirmed?`<button class="small" data-fv10-rights="${esc(String(g.id))}">Confirm rights</button>`:''}</div>`:g.status==='approved'?'<small>✓ Published in All Games. Free editions can be claimed and downloaded.</small>':''}<div class="admin-actions"><button class="small" data-fv10-preflight="${esc(String(g.id))}">Check release</button></div><p class="muted" data-fv10-result="${esc(String(g.id))}"></p></div></article>`;
  }).join(''):'<p class="muted">No game submissions yet. Upload your first release above.</p>';
  fvLoadStats();
 }
@@ -331,7 +350,7 @@ async function loadAdminQueue(){
   const a=assets.get(String(g.id)); const cover=a?.cover_path?fvPublicMedia(a.cover_path):'';
   const screenshots=(a?.screenshot_paths||[]).map(path=>`<a href="${esc(fvPublicMedia(path))}" target="_blank" rel="noopener noreferrer">Screenshot</a>`).join(' · ');
   const canApprove=!!(a?.cover_path&&a?.build_path);
-  return `<article class="dev-admin-release"><div class="dev-admin-media">${cover?`<img src="${esc(cover)}" alt="Game cover">`:''}</div><div><h3>${esc(g.title)}</h3><p>${esc(g.description)}</p><p class="muted">${esc(g.genre)} · ${money(g.price_cents)} · Developer ${esc(g.user_id)}<br>v${esc(a?.release_version||'?')} · OS ${esc(a?.supported_os||'Unknown')} · ${a?.build_path?`ZIP ${fvFileSize(a.build_bytes||0)}`:'No ZIP'}<br>Requirements: ${esc(a?.requirements||'Not provided')}<br>Release notes: ${esc(a?.release_notes||'Not provided')}</p>${screenshots?`<p>${screenshots}</p>`:''}${fvSafeHttpUrl(a?.trailer_url)?`<p><a href="${esc(fvSafeHttpUrl(a.trailer_url))}" target="_blank" rel="noopener noreferrer">Trailer</a></p>`:''}<div class="admin-actions">${a?.build_path?`<button class="small" data-review-download="${esc(String(g.id))}">Review ZIP ↓</button>`:''}<button class="small" data-admin-review="${esc(String(g.id))}" data-decision="approved" ${canApprove?'':'disabled title="Cover and ZIP required"'}>Approve &amp; publish</button><button class="danger-button" data-admin-review="${esc(String(g.id))}" data-decision="rejected">Reject</button></div>${!canApprove?'<small class="muted">Waiting for developer to finish uploads.</small>':''}</div></article>`;
+  return `<article class="dev-admin-release"><div class="dev-admin-media">${cover?`<img src="${esc(cover)}" alt="Game cover">`:''}</div><div><h3>${esc(g.title)}</h3><p>${esc(g.description)}</p><p class="muted">${esc(g.genre)} · ${money(g.price_cents)} · Developer ${esc(g.user_id)}<br>v${esc(a?.release_version||'?')} · OS ${esc(a?.supported_os||'Unknown')} · ${a?.build_path?`ZIP ${fvFileSize(a.build_bytes||0)}`:'No ZIP'}<br>Requirements: ${esc(a?.requirements||'Not provided')}<br>Release notes: ${esc(a?.release_notes||'Not provided')}</p>${screenshots?`<p>${screenshots}</p>`:''}${fvSafeHttpUrl(a?.trailer_url)?`<p><a href="${esc(fvSafeHttpUrl(a.trailer_url))}" target="_blank" rel="noopener noreferrer">Trailer</a></p>`:''}<div class="admin-actions">${a?.build_path?`<button class="small" data-review-download="${esc(String(g.id))}">Review ZIP ↓</button>`:''}<button class="small" data-fv10-preflight="${esc(String(g.id))}">Check release</button><button class="small" data-admin-review="${esc(String(g.id))}" data-decision="approved" ${canApprove?'':'disabled title="Cover and ZIP required"'}>Approve &amp; publish</button><button class="danger-button" data-admin-review="${esc(String(g.id))}" data-decision="rejected">Reject</button></div>${!canApprove?'<small class="muted">Waiting for developer to finish uploads.</small>':''}<p class="muted" data-fv10-result="${esc(String(g.id))}"></p></div></article>`;
  }).join(''):'<p class="muted">No pending game submissions.</p>';
 }
 
@@ -475,6 +494,25 @@ document.addEventListener("click",async e=>{
 
  const download=e.target.closest('[data-download]');
  if(download){await fvDownloadBuild(download.dataset.download);return;}
+ const verify=e.target.closest('[data-fv10-preflight]');
+ if(verify){
+  verify.disabled=true;
+  try{await fv10CheckRelease(verify.dataset.fv10Preflight);}catch(err){toast(err.message);}
+  finally{verify.disabled=false;}
+  return;
+ }
+ const rights=e.target.closest('[data-fv10-rights]');
+ if(rights){
+  if(!needLogin())return;
+  if(!confirm('Do you confirm that you own or have permission to distribute this entire game, including artwork and files? This does not replace staff review.'))return;
+  rights.disabled=true;
+  try{
+   await fvSaveAssetPatch(rights.dataset.fv10Rights,{distribution_rights_confirmed:true});
+   toast('Distribution rights declaration saved.');
+   await loadDeveloperSubmissions();
+  }catch(err){toast(err.message||'Could not save rights declaration.');rights.disabled=false;}
+  return;
+ }
  const reviewDownload=e.target.closest('[data-review-download]');
  if(reviewDownload){await fvReviewDownload(reviewDownload.dataset.reviewDownload);return;}
  const attach=e.target.closest('[data-attach]');
@@ -484,11 +522,17 @@ document.addEventListener("click",async e=>{
  if(review){
   if(!isFluxAdmin){toast('Admin only.');return;}
   const id=review.dataset.adminReview;const decision=review.dataset.decision;
-  if(decision==='approved'&&!confirm('Have you inspected the images, game ownership and ZIP contents? Approval will publish this listing.'))return;
+  if(decision==='approved'){
+   try{
+    const check=await fv10CheckRelease(id,{quiet:true});
+    if(!check?.ready){toast('Release is not ready. Use Check release for details.');return;}
+   }catch(err){toast(err.message);return;}
+   if(!confirm('Have you verified ownership, inspected the ZIP and images, and scanned this game for malware? Approval makes the free game public.'))return;
+  }
   let note=decision==='rejected'?prompt('Reason for rejection (shown to developer):','Please provide a safe, complete build and accurate game details.'):prompt('Optional approval note:','');
   if(note===null)return;
   review.disabled=true;
-  const {error}=await db.rpc('fv_review_submission',{p_submission_id:String(id),p_decision:decision,p_notes:note||''});
+  const {error}=await db.rpc('fv10_review_submission',{p_submission_id:String(id),p_decision:decision,p_notes:note||''});
   review.disabled=false;
   if(error){toast(error.message);return;}
   toast(decision==='approved'?'Game approved and published!':'Submission rejected with feedback.');
@@ -514,9 +558,10 @@ $("developer-game-form").addEventListener("submit",async e=>{
   if(shots.length>3)throw new Error('Please choose at most 3 screenshots.');
   shots.forEach(fvCheckImage);
   if(!$('submission-rights').checked)throw new Error('Confirm you have the rights to distribute the game.');
+  await fv10CheckZipHeader(build);
   if($('submission-trailer').value.trim()&&!fvSafeHttpUrl($('submission-trailer').value.trim()))throw new Error('Trailer URL must use https:// or http://.');
   const price=Math.round(Number($('submission-price').value)*100);
-  if(!Number.isSafeInteger(price)||price<0||price>999900)throw new Error('Enter a valid price from $0 to $9,999 CAD.');
+  if(price!==0)throw new Error('Free games only during the first publishing launch. Paid checkout is not ready.');
   fvBusy=true;$('developer-submit').disabled=true;
   fvStatus('Creating your pending review submission…');
   const payload={user_id:user.id,title:$('submission-title').value.trim(),genre:$('submission-genre').value.trim(),description:$('submission-description').value.trim(),price_cents:price,supports_cards:$('submission-cards').checked};
@@ -526,6 +571,7 @@ $("developer-game-form").addEventListener("submit",async e=>{
   try{
     await fvSaveAssetPatch(submissionId,{
       release_version:$('submission-version').value.trim().slice(0,30)||'1.0.0',
+      distribution_rights_confirmed:$('submission-rights').checked === true,
       supported_os:$('submission-os').value,
       trailer_url:$('submission-trailer').value.trim()||null,
       requirements:$('submission-requirements').value.trim().slice(0,1500),

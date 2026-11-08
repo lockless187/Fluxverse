@@ -124,7 +124,7 @@ async function loadGames(){
   // The optional public RPC returns approved games only. Fall back to v5's
   // existing published-listings behavior until STORE_ENHANCEMENTS.sql is run.
   let rows=null;
-  const viaRpc=await db.rpc('fv_public_store_games');
+  const viaRpc=await db.rpc('cv11_public_store_games');
   if(!viaRpc.error)rows=viaRpc.data;
   else {
    const fallback=await db.from('games').select('*').order('created_at',{ascending:false}).limit(1000);
@@ -275,8 +275,19 @@ async function fvUploadBuild(submissionId,file){
  await fv10CheckZipHeader(file);
  if(FV_R2_API) return fvUploadR2Build(submissionId,file);
  const path=`${user.id}/${submissionId}/build-${crypto.randomUUID()}.zip`;
- const {error}=await db.storage.from(FV_BUILD_BUCKET).upload(path,file,{upsert:false,contentType:'application/zip'});
- if(error) throw new Error('ZIP upload failed: '+error.message);
+ // Some Windows browsers label .zip files application/x-zip-compressed;
+ // force the verified ZIP payload to application/zip before sending to Storage.
+ // The private storage bucket also accepts BOTH ZIP MIME types after the SQL patch.
+ const zipPayload = new Blob([file], {type:'application/zip'});
+ const {error}=await db.storage.from(FV_BUILD_BUCKET).upload(path,zipPayload,{
+   upsert:false,contentType:'application/zip',cacheControl:'60'
+ });
+ if(error){
+   const msg=String(error.message||'Unknown storage error');
+   throw new Error('ZIP upload failed: '+msg+(/mime|content.type/i.test(msg)
+     ? ' — Run the Cryptic Verse v11 SQL once to allow Windows ZIP file types.':'')
+   );
+ }
  return path;
 }
 async function fvAttachFiles(submissionId,{cover=null,build=null,shots=[]}={}){
@@ -295,12 +306,14 @@ async function fvDownloadBuild(gameId){
  if(!needLogin()) return;
  try{
    toast('Generating private download link…');
-   const {data:path,error}=await db.rpc('fv_request_download',{p_game_id:String(gameId)});
+   const {data:path,error}=await db.rpc('cv11_secure_download',{p_game_id:String(gameId)});
    if(error) throw error;
    if(path.startsWith('r2:')){await fvR2DownloadTicket({gameId:String(gameId)});toast('Private download started.');return;}
    const {data,error:signError}=await db.storage.from(FV_BUILD_BUCKET).createSignedUrl(path,120);
    if(signError) throw signError;
-   const a=document.createElement('a');a.href=data.signedUrl;a.rel='noopener noreferrer';a.target='_blank';
+   const url=new URL(data.signedUrl);
+   url.searchParams.set('download', 'CrypticVerse-Game.zip');
+   const a=document.createElement('a');a.href=url.toString();a.rel='noopener noreferrer';a.target='_blank';
    document.body.appendChild(a);a.click();a.remove();
    toast('Your download link is ready (valid for 2 minutes).');
  }catch(err){toast(err.message||'Download unavailable.');}

@@ -1,33 +1,38 @@
-FLUXVERSE WEBSITE FILES
+CRYPTIC VERSE — CREATOR STUDIO V2 (LOCAL PREVIEW)
 
-FILES
-- index.html
-- styles.css
-- app.js
+PURPOSE
+Separate PC downloadable games from community-created 3D browser worlds.
+PC Game Store: index.html (existing website, Supabase, unchanged data and logic)
+Community Games: games.html (browser-local world catalog)
+Creator Studio: creator.html (block-world editor, Explorer, Properties, templates, play testing)
+Play World: play.html (read-only gameplay page with keyboard movement)
 
-STEP A — CONNECT SUPABASE
-1. Open app.js in a text editor.
-2. At the very top, replace PASTE_PROJECT_URL_HERE with your Supabase Project URL.
-3. Replace PASTE_PUBLISHABLE_KEY_HERE with your Supabase Publishable key.
-4. Keep the quotation marks around both values.
-5. Save app.js.
+UPLOAD INTO YOUR EXISTING WEBSITE GITHUB REPOSITORY, NOT YOUR LAUNCHER REPOSITORY:
+creator.html
+creator.js
+creator.css
+games.html
+games.js
+community.css
+play.html
+play.js
+assets/ (five .webp seasonal images)
 
-Only use the Project URL and Publishable key (also sometimes called anon public key). Never use a service_role key, secret key, or database password in website code.
+Optional index.html: This included index.html is based on the previously uploaded site snapshot and adds two top-navigation links: Community Games and Creator Studio. DO NOT replace an index.html that has been updated since that snapshot. Instead, add these two links to your present website navigation:
+<a href="games.html">Community Games</a>
+<a href="creator.html">Creator Studio</a>
 
-STEP B — UPLOAD TO GITHUB
-Upload index.html, styles.css, and app.js to the ROOT of your fluxverse repository. README.txt is optional.
-Do not upload your private FluxVerse-Details.txt file.
+DEPLOY
+Commit files to the website GitHub repository. Let Cloudflare redeploy.
+Visit https://YOUR-WEBSITE/games.html for the community section.
+Visit https://YOUR-WEBSITE/creator.html for the creator.
+Create a world, click Add to My Community Games, open Community Games, then Play World.
 
-STEP C — CLOUDFLARE PAGES
-In Cloudflare: Workers & Pages > Create > Pages > Connect to Git.
-Choose your GitHub account and fluxverse repository.
-Framework preset: None.
-Build command: leave blank.
-Build output directory: / (if it rejects this, use .).
-Deploy.
-
-After deployment, add the Cloudflare website address to Supabase Authentication > URL Configuration as the Site URL and an allowed Redirect URL.
-
-FEATURE NOTES
-This starter connects Supabase auth, profile display, sample game catalog, library, wishlist, community posts, username search, and friend requests.
-It does not include checkout or real paid purchases. The displayed prices are catalog labels only. Do not take payments until a secure payment system and server-side purchase verification are added.
+IMPORTANT LIMITATIONS
+- This is NOT Roblox Studio or a public Roblox equivalent.
+- The world catalog is saved in localStorage on ONE browser and ONE origin. It is not visible to other players, devices, or browsers.
+- Cloud accounts, public publishing, moderation, multiplayer, scripting, avatars, monetization, and advanced models are NOT implemented.
+- Don't use the game catalog for real user content until Supabase authentication, ownership checks, data validation, RLS and moderation are added.
+- All 3D scenes load Three.js from jsDelivr; network access is needed.
+- This package is for the WEBSITE, not the Electron Windows launcher.
+- Existing PC game database and app.js are not modified.

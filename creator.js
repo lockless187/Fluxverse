@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const $ = id => document.getElementById(id);
 const MAX_BLOCKS = 500;
 const STORAGE = 'cryptic-verse-creator-draft-v1';
+const COMMUNITY = 'cryptic-verse-community-worlds-v2';
 const MATERIALS = {
   Grass:0x6cae73, Stone:0x9999a7, Wood:0x9c6848,
   Brick:0xb75e57, Gold:0xeac16e, Ice:0x8bd5ec,
@@ -65,6 +66,7 @@ function draw(){
   selectBox.visible=!!selected;
   if(selected){selectBox.position.set(selected.x,selected.y+.5,selected.z);selectBox.rotation.set(0,0,0);selectBox.scale.set(1,1,1);selectBox.updateMatrixWorld();}
   $('object-count').textContent=`${blocks.length} / ${MAX_BLOCKS} blocks`;
+  renderExplorer();
   $('selection-info').textContent=selected?`Selected: ${selected.material} at (${selected.x}, ${selected.y}, ${selected.z})`:`${blocks.length} blocks in your world`;
 }
 function snapshot(){history.push(JSON.stringify({blocks,goal}));if(history.length>60)history.shift();}
@@ -119,3 +121,43 @@ new ResizeObserver(resize).observe($('three-root'));resize();
 renderMaterials();
 try{const draft=localStorage.getItem(STORAGE);if(draft){loadWorld(JSON.parse(draft));$('save-status').textContent='Draft loaded';}else{blocks=[{x:0,y:0,z:0,material:'Grass',rotation:0},{x:2,y:0,z:0,material:'Stone',rotation:0},{x:4,y:0,z:0,material:'Gold',rotation:0}];draw();}}catch{draw();showToast('Could not read saved draft');}
 let then=performance.now();function loop(now){const dt=Math.min((now-then)/1000,.05);then=now;if(playing)playFrame(dt);else orbit.update();renderer.render(scene,camera);requestAnimationFrame(loop);}requestAnimationFrame(loop);
+
+// Creator Studio v2 — Explorer, Properties, starter templates and local-only community catalog.
+function renderExplorer(){
+ const host=$('explorer'); if(!host)return;
+ host.replaceChildren();
+ const folder=document.createElement('button'); folder.type='button';folder.textContent='▾ Workspace  ·  '+blocks.length+' Parts';folder.disabled=true;host.append(folder);
+ const goalButton=document.createElement('button');goalButton.type='button';goalButton.textContent='  ⚑ Goal (Finish Flag)';goalButton.onclick=()=>{selected=null;draw();showToast('Choose Goal tool to move finish flag');};host.append(goalButton);
+ blocks.forEach((b,i)=>{const el=document.createElement('button');el.type='button';el.textContent='    ▣ '+b.material+' Part '+(i+1);el.classList.toggle('active',selected===b);el.onclick=()=>{setTool('select');selected=b;draw();};host.append(el);});
+ const disabled=!selected;
+ for(const key of ['x','y','z']){$('prop-'+key).disabled=disabled;$('prop-'+key).value=disabled?'':selected[key];}
+ $('prop-name').value=disabled?'None':selected.material+' Part';
+ $('prop-mat').disabled=disabled;$('prop-apply').disabled=disabled;
+ if(!disabled)$('prop-mat').value=selected.material;
+}
+const propMat=$('prop-mat');
+for(const mat of Object.keys(MATERIALS)){const option=document.createElement('option');option.value=mat;option.textContent=mat;propMat.add(option);}
+$('prop-apply').onclick=()=>{
+ if(!selected)return;const next={};for(const key of ['x','y','z']){const raw=$('prop-'+key).value;if(!/^[-]?\d+$/.test(raw))return showToast('Coordinates must be whole numbers');next[key]=Number(raw);}
+ if(Math.abs(next.x)>24||Math.abs(next.z)>24||next.y<0||next.y>29)return showToast('Position is outside the build area');
+ if(blocks.some(b=>b!==selected&&b.x===next.x&&b.y===next.y&&b.z===next.z))return showToast('A block already exists there');
+ snapshot();Object.assign(selected,next,{material:propMat.value});dirty();
+};
+$('template-blank').onclick=reset;
+$('template-obby').onclick=()=>{
+ if(!confirm('Replace this world with a starter obstacle course? Export your current world if needed.'))return;
+ snapshot();blocks=[];
+ for(let i=0;i<13;i++){blocks.push({x:i*2-12,y:Math.floor(i/4),z:(i%3)-1,material:i%4===0?'Gold':i%2?'Stone':'Grass',rotation:0});}
+ goal={x:12,y:3,z:-1};worldName='My First Obby';$('world-name').value=worldName;$('stage-title').textContent=worldName;selected=null;dirty();orbitCamera();showToast('Parkour starter created');
+};
+$('publish-local').onclick=()=>{
+ try{
+ const stored=JSON.parse(localStorage.getItem(COMMUNITY)||'[]');if(!Array.isArray(stored))throw Error('Invalid library');
+ const clean=validateWorld({schema:1,name:worldName||'Untitled World',blocks,goal});
+ const id=globalThis.crypto?.randomUUID?.()||('world-'+Date.now());
+ stored.unshift({id,schema:1,name:clean.name,blocks:clean.blocks,goal:clean.goal,createdAt:new Date().toISOString()});
+ localStorage.setItem(COMMUNITY,JSON.stringify(stored.slice(0,30)));
+ showToast('Added to My Community Games on this browser!');
+ }catch(e){showToast('Could not save game: '+e.message);}
+};
+renderExplorer();

@@ -308,14 +308,13 @@ async function fvDownloadBuild(gameId){
    toast('Generating private download link…');
    const {data:path,error}=await db.rpc('cv11_secure_download',{p_game_id:String(gameId)});
    if(error) throw error;
-   if(path.startsWith('r2:')){await fvR2DownloadTicket({gameId:String(gameId)});window.cvRecordDownloadRequest?.(String(gameId));toast('Private download started.');return;}
+   if(path.startsWith('r2:')){await fvR2DownloadTicket({gameId:String(gameId)});toast('Private download started.');return;}
    const {data,error:signError}=await db.storage.from(FV_BUILD_BUCKET).createSignedUrl(path,120);
    if(signError) throw signError;
    const url=new URL(data.signedUrl);
    url.searchParams.set('download', 'CrypticVerse-Game.zip');
    const a=document.createElement('a');a.href=url.toString();a.rel='noopener noreferrer';a.target='_blank';
    document.body.appendChild(a);a.click();a.remove();
-   window.cvRecordDownloadRequest?.(String(gameId));
    toast('Your download link is ready (valid for 2 minutes).');
  }catch(err){toast(err.message||'Download unavailable.');}
 }
